@@ -75,22 +75,22 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 	fr (v, voiceCount) {
 		if (!btArRead(voicesEnable, v)) continue;
 		enabledVoiceCount++;
-		const double spdModIncrem = voices[v].spdMod.spd / sampleRate;
-		const double ampModIncrem = voices[v].ampMod.spd / sampleRate;
+		const double spdModIncrem = voices[v][vo_spdMod].spd / sampleRate;
+		const double ampModIncrem = voices[v][vo_ampMod].spd / sampleRate;
 		const double rightFactor = (voicesPan[v]+1.0)/2.0;
 		const double leftFactor  = 1.0 - rightFactor;
 		for (int s = 0; s < floatStreamSize; s += 2) {
-			voices[v].spdEnv.pos += voices[v].spdEnv.spd / sampleRate;
-			clampOsc(&voices[v].spdEnv);
-			voices[v].spdMod.pos += spdModIncrem;
-			loopOsc(&voices[v].spdMod);
-			voices[v].wave.pos += (voices[v].wave.spd * readOsc(voices[v].spdEnv) * readOsc(voices[v].spdMod)) / sampleRate;
-			loopOsc(&voices[v].wave);
-			voices[v].ampEnv.pos += voices[v].ampEnv.spd / sampleRate;
-			clampOsc(&voices[v].ampEnv);
-			voices[v].ampMod.pos += ampModIncrem;
-			loopOsc(&voices[v].ampMod);
-			const double sample = readOsc(voices[v].wave) * readOsc(voices[v].ampMod) * readOsc(voices[v].ampEnv);
+			voices[v][vo_spdEnv].pos += voices[v][vo_spdEnv].spd / sampleRate;
+			clampOsc(&voices[v][vo_spdEnv]);
+			voices[v][vo_spdMod].pos += spdModIncrem;
+			loopOsc(&voices[v][vo_spdMod]);
+			voices[v][vo_wave].pos += (voices[v][vo_wave].spd * readOsc(voices[v][vo_spdEnv]) * readOsc(voices[v][vo_spdMod])) / sampleRate;
+			loopOsc(&voices[v][vo_wave]);
+			voices[v][vo_ampEnv].pos += voices[v][vo_ampEnv].spd / sampleRate;
+			clampOsc(&voices[v][vo_ampEnv]);
+			voices[v][vo_ampMod].pos += ampModIncrem;
+			loopOsc(&voices[v][vo_ampMod]);
+			const double sample = readOsc(voices[v][vo_wave]) * readOsc(voices[v][vo_ampMod]) * readOsc(voices[v][vo_ampEnv]);
 			floatStream[s  ] += sample * leftFactor;
 			floatStream[s+1] += sample * rightFactor;
 		}

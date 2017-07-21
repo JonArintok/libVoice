@@ -6,13 +6,17 @@ typedef struct {
 	double    pos;       // position in shape, 0 to 1
 	double    spd;       // 1.0 results in 1 shape sample per output sample
 } osc;
-typedef struct {
-	osc     wave;   // looped
-	osc     ampMod; // looped, multiply wave amp
-	osc     spdMod; // looped, multiply wave speed
-	osc     ampEnv; // clamped, multiply wave amp
-	osc     spdEnv; // clamped, multiply wave speed
-} voice;
+
+enum {
+	vo_wave,   // looped
+	vo_ampMod, // looped, multiply wave amp
+	vo_spdMod, // looped, multiply wave speed
+	vo_ampEnv, // clamped, multiply wave amp
+	vo_spdEnv, // clamped, multiply wave speed
+	vo_oscPerVoice
+};
+typedef osc voice[vo_oscPerVoice];
+
 
 int initVoices(int initVoiceCount);
 int closeVoices(void);
