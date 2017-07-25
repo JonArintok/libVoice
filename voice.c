@@ -31,6 +31,11 @@ uint32_t floatStreamSize = 1024; // must be a power of 2
 atomic_t globalVolume = {0};
 const float practicallySilent = 0.001;
 
+typedef struct {float *data; uint64_t count;} floatArray;
+int         shapeCount;
+floatArray *shapes;
+SDL_mutex **shapeMutexes = NULL;
+
 int         voiceCount = 0;
 voice      *voices = NULL;
 float      *voicesPan = NULL;    // -1.0 is all left, 1.0 is all right
@@ -41,6 +46,11 @@ void setGlobalVolume(float v) {
 	if      (v >= 1) SDL_AtomicSet(&globalVolume, atomic_max);
 	else if (v <= 0) SDL_AtomicSet(&globalVolume, 0);
 	else             SDL_AtomicSet(&globalVolume, v*atomic_max);
+}
+
+
+void uploadShape(int shape, int sampleCount) {
+	
 }
 
 void loopOsc(osc *o) {
@@ -61,17 +71,15 @@ void clampOsc(osc *o) {
 }
 
 float readOsc(const osc o) {
-	return o.shape[(long)(o.pos * (o.sampleCount-1))] * o.amp;
+	return shapes[o.shape].data[(long)(o.pos * (shapes[o.shape].count-1))] * o.amp;
 }
 
 void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 	float *floatStream = (float*)byteStream;
 	const int enabledVoiceCount = btArCountSet(voicesEnable, voiceCount);
 	const float globalVolumeF = (float)SDL_AtomicGet(&globalVolume)/atomic_max;
-	if (globalVolumeF <= practicallySilent || enabledVoiceCount < 1) {
-		fr (s, floatStreamSize) floatStream[s] = 0; // silence
-		return;
-	}
+	fr (s, floatStreamSize) floatStream[s] = 0; // silence
+	if (globalVolumeF <= practicallySilent || enabledVoiceCount < 1) return;
 	fr (v, voiceCount) {
 		if (!btArRead(voicesEnable, v)) continue;
 		const double spdModIncrem = voices[v][vo_spdMod].spd / sampleRate;
@@ -105,7 +113,7 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 SDL_AudioDeviceID AudioDevice;
 SDL_AudioSpec audioSpec;
 
-int initVoices(int initVoiceCount) {
+int initVoices(int initVoiceCount, int initShapeCount) {
 	SDL_Init(SDL_INIT_AUDIO);_sdlec;
 	SDL_AudioSpec want = {0};
 	want.freq     = sampleRate;
@@ -116,29 +124,26 @@ int initVoices(int initVoiceCount) {
 	AudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &audioSpec, 0);_sdlec;
 	sampleRate = audioSpec.freq;
 	floatStreamSize = audioSpec.size/sizeof(float);
+	shapeCount = initShapeCount;
+	shapes = calloc(shapeCount, sizeof(floatArray));
+	shapeMutexes = calloc(voiceCount, sizeof(SDL_mutex*));
+	fr (s, shapeCount) {shapeMutexes[s] = SDL_CreateMutex();_sdlec;}
 	voiceCount = initVoiceCount;
 	voices = calloc(voiceCount, sizeof(voice));
 	voicesPan = calloc(voiceCount, sizeof(float));
-	voiceMutexes = calloc(voiceCount, sizeof());
+	voiceMutexes = calloc(voiceCount, sizeof(SDL_mutex*));
+	fr (v, voiceCount) {voiceMutexes[v] = SDL_CreateMutex();_sdlec;}
 	voicesEnable = btArAlloc(voiceCount);
-	fr (v, voiceCount) {
-		voiceMutexes[v] = SDL_CreateMutex(voiceMutexes[v]);_sdlec;
-	}
 	return 0;
 }
 int closeVoices(void) {
 	SDL_CloseAudioDevice(AudioDevice);_sdlec;
-	//fr (v, voiceCount) {
-	//	fr (o, vo_oscPerVoice) {
-	//		free(voices[v][o].shape);
-	//	}
-	//}
+	fr (s, shapeCount) free(shapes[s].data);
+	free(shapes);
 	free(voices);
 	free(voicesPan);
 	free(voicesEnable);
-	fr (v, voiceCount) {
-		SDL_DestroyMutex(voiceMutexes[v]);_sdlec;
-	}
+	fr (v, voiceCount) {SDL_DestroyMutex(voiceMutexes[v]);_sdlec;}
 	free(voiceMutexes);
 	return 0;
 }
