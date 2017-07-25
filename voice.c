@@ -21,31 +21,26 @@ const double A4pitch =  57.0;
 double freqFromPitch(double pitch) {
 	return pow(ChromaticRatio, pitch-A4pitch)*A4freq;
 }
-
-void buildSineWave(float *data, int length) {
-	fr (i, length) data[i] = sin(i*(tau/length));
+void buildSineWave(float *data, int sampleCount) {
+	fr (i, sampleCount) data[i] = sin(i*(tau/sampleCount));
 }
 
 uint32_t sampleRate = 48000;
 uint32_t frameRate = 60;
 uint32_t floatStreamSize = 1024; // must be a power of 2
 atomic_t globalVolume = {0};
+const float practicallySilent = 0.001;
 
 int         voiceCount = 0;
 voice      *voices = NULL;
 float      *voicesPan = NULL;    // -1.0 is all left, 1.0 is all right
 bitBlock_t *voicesEnable = NULL; // voice will be ignored it's bit is false
+SDL_mutex **voiceMutexes = NULL;
 
 void setGlobalVolume(float v) {
-	if (v >= 1) {
-		SDL_AtomicSet(&globalVolume, atomic_max);
-		return;
-	}
-	if (v <= 0) {
-		SDL_AtomicSet(&globalVolume, 0);
-		return;
-	}
-	SDL_AtomicSet(&globalVolume, v*atomic_max);
+	if      (v >= 1) SDL_AtomicSet(&globalVolume, atomic_max);
+	else if (v <= 0) SDL_AtomicSet(&globalVolume, 0);
+	else             SDL_AtomicSet(&globalVolume, v*atomic_max);
 }
 
 void loopOsc(osc *o) {
@@ -66,15 +61,19 @@ void clampOsc(osc *o) {
 }
 
 float readOsc(const osc o) {
-	return o.shape[(long)(o.pos * (o.shapeSize-1))] * o.amp;
+	return o.shape[(long)(o.pos * (o.sampleCount-1))] * o.amp;
 }
 
 void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 	float *floatStream = (float*)byteStream;
-	float enabledVoiceCount = 0;
+	const int enabledVoiceCount = btArCountSet(voicesEnable, voiceCount);
+	const float globalVolumeF = (float)SDL_AtomicGet(&globalVolume)/atomic_max;
+	if (globalVolumeF <= practicallySilent || enabledVoiceCount < 1) {
+		fr (s, floatStreamSize) floatStream[s] = 0; // silence
+		return;
+	}
 	fr (v, voiceCount) {
 		if (!btArRead(voicesEnable, v)) continue;
-		enabledVoiceCount++;
 		const double spdModIncrem = voices[v][vo_spdMod].spd / sampleRate;
 		const double ampModIncrem = voices[v][vo_ampMod].spd / sampleRate;
 		const double rightFactor = (voicesPan[v]+1.0)/2.0;
@@ -96,40 +95,52 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 		}
 	}
 	if (enabledVoiceCount > 1) {
-		const float amp = ((float)SDL_AtomicGet(&globalVolume)/atomic_max) * (1.0/enabledVoiceCount);
+		const float amp = globalVolumeF * (1.0/enabledVoiceCount);
 		fr (s, floatStreamSize) floatStream[s] *= amp;
+		return;
 	}
-	else if (enabledVoiceCount == 1) {
-		const float amp = ((float)SDL_AtomicGet(&globalVolume)/atomic_max);
-		fr (s, floatStreamSize) floatStream[s] *= amp;
-	}
-	else {
-		fr (s, floatStreamSize) floatStream[s] = 0; // silence
-	}
+	fr (s, floatStreamSize) floatStream[s] *= globalVolumeF;
 }
 
 SDL_AudioDeviceID AudioDevice;
 SDL_AudioSpec audioSpec;
 
 int initVoices(int initVoiceCount) {
-	SDL_Init(SDL_INIT_AUDIO);_sdlec
+	SDL_Init(SDL_INIT_AUDIO);_sdlec;
 	SDL_AudioSpec want = {0};
 	want.freq     = sampleRate;
 	want.format   = AUDIO_F32;
 	want.channels = 2; // stereo
 	want.samples  = 1024; // must be a power of 2
 	want.callback = audioCallback;
-	AudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &audioSpec, 0);_sdlec
+	AudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &audioSpec, 0);_sdlec;
 	sampleRate = audioSpec.freq;
 	floatStreamSize = audioSpec.size/sizeof(float);
 	voiceCount = initVoiceCount;
 	voices = calloc(voiceCount, sizeof(voice));
+	voicesPan = calloc(voiceCount, sizeof(float));
+	voiceMutexes = calloc(voiceCount, sizeof());
+	voicesEnable = btArAlloc(voiceCount);
+	fr (v, voiceCount) {
+		voiceMutexes[v] = SDL_CreateMutex(voiceMutexes[v]);_sdlec;
+	}
 	return 0;
 }
 int closeVoices(void) {
-	SDL_CloseAudioDevice(AudioDevice);_sdlec
+	SDL_CloseAudioDevice(AudioDevice);_sdlec;
+	//fr (v, voiceCount) {
+	//	fr (o, vo_oscPerVoice) {
+	//		free(voices[v][o].shape);
+	//	}
+	//}
 	free(voices);
+	free(voicesPan);
+	free(voicesEnable);
+	fr (v, voiceCount) {
+		SDL_DestroyMutex(voiceMutexes[v]);_sdlec;
+	}
+	free(voiceMutexes);
 	return 0;
 }
-void unpauseAudio(void) {SDL_PauseAudioDevice(AudioDevice, 0);_sdlec}
-void   pauseAudio(void) {SDL_PauseAudioDevice(AudioDevice, 1);_sdlec}
+void unpauseAudio(void) {SDL_PauseAudioDevice(AudioDevice, 0);_sdlec;}
+void   pauseAudio(void) {SDL_PauseAudioDevice(AudioDevice, 1);_sdlec;}
