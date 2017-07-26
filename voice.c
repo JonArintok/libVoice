@@ -14,15 +14,12 @@
 #define atomic_t SDL_atomic_t
 #define atomic_max INT32_MAX // not sure if this is right...
 
-const double ChromaticRatio = 1.059463094359295264562; // the 12th root of 2
+const double chromaticRatio = 1.059463094359295264562; // the 12th root of 2
 const double A4freq  = 440.0;
 const double A4pitch =  57.0;
 
 double freqFromPitch(double pitch) {
-	return pow(ChromaticRatio, pitch-A4pitch)*A4freq;
-}
-void buildSineWave(float *data, int sampleCount) {
-	fr (i, sampleCount) data[i] = sin(i*(tau/sampleCount));
+	return pow(chromaticRatio, pitch-A4pitch)*A4freq;
 }
 
 uint32_t sampleRate = 48000;
@@ -42,11 +39,25 @@ floatArray *shapes = NULL;
 floatArray *shapesIn = NULL;
 SDL_mutex **shapeMutexes = NULL;
 
-void uploadShape(int shapeIndex, float *shape, int sampleCount) {
+void shapeFromMem(int shapeIndex, int sampleCount, float *mem) {
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
 	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sampleCount);
 	shapesIn[shapeIndex].count = sampleCount;
-	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = shape[s];
+	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = mem[s];
+	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
+}
+void shapeFromSin(int shapeIndex, int sampleCount) {
+	SDL_LockMutex(shapeMutexes[shapeIndex]);
+	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sampleCount);
+	shapesIn[shapeIndex].count = sampleCount;
+	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = sin(s*(tau/sampleCount));
+	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
+}
+void shapeFromSaw(int shapeIndex, int sampleCount) {
+	SDL_LockMutex(shapeMutexes[shapeIndex]);
+	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sampleCount);
+	shapesIn[shapeIndex].count = sampleCount;
+	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = 1.0 - ((float)s/sampleCount)*2;
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
 
@@ -168,6 +179,7 @@ int initVoices(int initVoiceCount, int initShapeCount) {
 	floatStreamSize = audioSpec.size/sizeof(float);
 	shapeCount = initShapeCount;
 	shapes = calloc(shapeCount, sizeof(floatArray));
+	shapesIn = calloc(shapeCount, sizeof(floatArray));
 	shapeMutexes = calloc(voiceCount, sizeof(SDL_mutex*));
 	fr (s, shapeCount) {shapeMutexes[s] = SDL_CreateMutex();_sdlec;}
 	voiceCount = initVoiceCount;
@@ -184,10 +196,13 @@ int closeVoices(void) {
 	fr (s, shapeCount) {
 		SDL_LockMutex(shapeMutexes[s]);
 		free(shapes[s].data);
+		free(shapesIn[s].data);
 		SDL_UnlockMutex(shapeMutexes[s]);
-		SDL_DestroyMutex(shapeMutexes[v]);_sdlec;
+		SDL_DestroyMutex(shapeMutexes[s]);_sdlec;
 	}
 	free(shapes);
+	free(shapesIn);
+	free(shapeMutexes);
 	free(voices);
 	free(voicesPan);
 	free(voicesEnable);

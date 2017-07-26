@@ -24,7 +24,9 @@ void unpauseAudio(void);
 void pauseAudio(void);
 void setGlobalVolume(float v);
 
-void uploadShape(int shapeIndex, float *shape, int sampleCount);
+void shapeFromMem(int shapeIndex, int sampleCount, float *mem);
+void shapeFromSin(int shapeIndex, int sampleCount);
+void shapeFromSaw(int shapeIndex, int sampleCount);
 
 void setOscShape(int voiceIndex, int voicePart, int shapeIndex);
 void setOscAmp  (int voiceIndex, int voicePart, float amp);

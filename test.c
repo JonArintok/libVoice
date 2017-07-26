@@ -3,24 +3,25 @@
 #include <SDL2/SDL.h>
 #include "voice.h"
 #include "sdlec.h"
+#include "math.h"
 
-#define voiceCount 4
+#define voiceCount 1
 enum {
-	shape_square,
-	shape_saw,
+	shape_sin,
 	shape_tri,
-	shape_sine,
+	shape_saw,
+	shape_pulse,
 	shape_shapeCount
 };
 
 int main(int argc, char **argv) {
-	initVoices(voiceCount, shape_shapeCount);
 	SDL_Init(SDL_INIT_TIMER);_sdlec;
-	//
-	//unpauseAudio();
-	SDL_Delay(100);
-	closeVoices();
+	initVoices(voiceCount, shape_shapeCount);
+	unpauseAudio();
 	
+	SDL_Delay(50);
+	
+	closeVoices();
 	SDL_Quit();_sdlec;
 	return 0;
 }
