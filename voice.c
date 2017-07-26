@@ -42,18 +42,49 @@ floatArray *shapes = NULL;
 floatArray *shapesIn = NULL;
 SDL_mutex **shapeMutexes = NULL;
 
+void uploadShape(int shapeIndex, float *shape, int sampleCount) {
+	SDL_LockMutex(shapeMutexes[shapeIndex]);
+	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sampleCount);
+	shapesIn[shapeIndex].count = sampleCount;
+	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = shape[s];
+	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
+}
+
 int         voiceCount = 0;
 voice      *voices = NULL;
 float      *voicesPan = NULL;    // -1.0 is all left, 1.0 is all right
 bitBlock_t *voicesEnable = NULL; // voice will be ignored it's bit is false
 SDL_mutex **voiceMutexes = NULL;
 
-void uploadShape(float *shape, int sampleCount, int shapeIndex) {
-	SDL_LockMutex(shapeMutexes[shapeIndex]);
-	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sampleCount);
-	shapesIn[shapeIndex].count = sampleCount;
-	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = shape[s];
-	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
+void setOscShape(int voiceIndex, int voicePart, int shapeIndex) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	voices[voiceIndex][voicePart].shape = shapeIndex;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
+void setOscAmp(int voiceIndex, int voicePart, float amp) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	voices[voiceIndex][voicePart].amp = amp;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
+void setOscPos(int voiceIndex, int voicePart, float pos) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	voices[voiceIndex][voicePart].pos = pos;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
+void setOscSpd(int voiceIndex, int voicePart, float spd) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	voices[voiceIndex][voicePart].spd = spd;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
+void setOsc(int voiceIndex, int voicePart, osc o) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	voices[voiceIndex][voicePart] = o;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
+void setVoice(int voiceIndex, voice v) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	fr (o, vo_oscPerVoice) voices[voiceIndex][o] = v[o];
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
 
 void loopOsc(osc *o) {
@@ -80,11 +111,7 @@ float readOsc(const osc o) {
 void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 	fr (s, shapeCount) {
 		if (!SDL_TryLockMutex(shapeMutexes[s])) {
-			if (shapes[s].data != shapesIn[s].data) {
-				free(shapes[s].data);
-				shapes[s].data = shapesIn[s].data;
-			}
-			shapes[s].count = shapesIn[s].count;
+			shapes[s] = shapesIn[s];
 			SDL_UnlockMutex(shapeMutexes[s]);
 		}
 	}
@@ -125,7 +152,7 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 	fr (s, floatStreamSize) floatStream[s] *= globalVolumeF;
 }
 
-SDL_AudioDeviceID AudioDevice;
+SDL_AudioDeviceID audioDevice;
 SDL_AudioSpec audioSpec;
 
 int initVoices(int initVoiceCount, int initShapeCount) {
@@ -136,7 +163,7 @@ int initVoices(int initVoiceCount, int initShapeCount) {
 	want.channels = 2; // stereo
 	want.samples  = 1024; // must be a power of 2
 	want.callback = audioCallback;
-	AudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &audioSpec, 0);_sdlec;
+	audioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &audioSpec, 0);_sdlec;
 	sampleRate = audioSpec.freq;
 	floatStreamSize = audioSpec.size/sizeof(float);
 	shapeCount = initShapeCount;
@@ -151,9 +178,15 @@ int initVoices(int initVoiceCount, int initShapeCount) {
 	voicesEnable = btArAlloc(voiceCount);
 	return 0;
 }
+
 int closeVoices(void) {
-	SDL_CloseAudioDevice(AudioDevice);_sdlec;
-	fr (s, shapeCount) free(shapes[s].data);
+	SDL_CloseAudioDevice(audioDevice);_sdlec;
+	fr (s, shapeCount) {
+		SDL_LockMutex(shapeMutexes[s]);
+		free(shapes[s].data);
+		SDL_UnlockMutex(shapeMutexes[s]);
+		SDL_DestroyMutex(shapeMutexes[v]);_sdlec;
+	}
 	free(shapes);
 	free(voices);
 	free(voicesPan);
@@ -162,5 +195,6 @@ int closeVoices(void) {
 	free(voiceMutexes);
 	return 0;
 }
-void unpauseAudio(void) {SDL_PauseAudioDevice(AudioDevice, 0);_sdlec;}
-void   pauseAudio(void) {SDL_PauseAudioDevice(AudioDevice, 1);_sdlec;}
+
+void unpauseAudio(void) {SDL_PauseAudioDevice(audioDevice, 0);_sdlec;}
+void   pauseAudio(void) {SDL_PauseAudioDevice(audioDevice, 1);_sdlec;}

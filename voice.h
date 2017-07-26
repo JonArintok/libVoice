@@ -24,7 +24,14 @@ void unpauseAudio(void);
 void pauseAudio(void);
 void setGlobalVolume(float v);
 
-void uploadShape(float *shape, int sampleCount, int shapeIndex);
+void uploadShape(int shapeIndex, float *shape, int sampleCount);
+
+void setOscShape(int voiceIndex, int voicePart, int shapeIndex);
+void setOscAmp  (int voiceIndex, int voicePart, float amp);
+void setOscPos  (int voiceIndex, int voicePart, float pos);
+void setOscSpd  (int voiceIndex, int voicePart, float spd);
+void setOsc     (int voiceIndex, int voicePart, osc o);
+void setVoice   (int voiceIndex, voice v);
 
 void buildSineWave(float *data, int sampleCount);
 double freqFromPitch(double pitch);
