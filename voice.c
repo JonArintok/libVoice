@@ -29,11 +29,17 @@ uint32_t sampleRate = 48000;
 uint32_t frameRate = 60;
 uint32_t floatStreamSize = 1024; // must be a power of 2
 atomic_t globalVolume = {0};
-const float practicallySilent = 0.001;
+
+void setGlobalVolume(float v) {
+	if      (v >= 1) {SDL_AtomicSet(&globalVolume, atomic_max);_sdlec;}
+	else if (v <= 0) {SDL_AtomicSet(&globalVolume, 0);_sdlec;}
+	else             {SDL_AtomicSet(&globalVolume, v*atomic_max);_sdlec;}
+}
 
 typedef struct {float *data; uint64_t count;} floatArray;
 int         shapeCount;
-floatArray *shapes;
+floatArray *shapes = NULL;
+floatArray *shapesIn = NULL;
 SDL_mutex **shapeMutexes = NULL;
 
 int         voiceCount = 0;
@@ -42,15 +48,12 @@ float      *voicesPan = NULL;    // -1.0 is all left, 1.0 is all right
 bitBlock_t *voicesEnable = NULL; // voice will be ignored it's bit is false
 SDL_mutex **voiceMutexes = NULL;
 
-void setGlobalVolume(float v) {
-	if      (v >= 1) SDL_AtomicSet(&globalVolume, atomic_max);
-	else if (v <= 0) SDL_AtomicSet(&globalVolume, 0);
-	else             SDL_AtomicSet(&globalVolume, v*atomic_max);
-}
-
-
-void uploadShape(int shape, int sampleCount) {
-	
+void uploadShape(float *shape, int sampleCount, int shapeIndex) {
+	SDL_LockMutex(shapeMutexes[shapeIndex]);
+	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sampleCount);
+	shapesIn[shapeIndex].count = sampleCount;
+	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = shape[s];
+	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
 
 void loopOsc(osc *o) {
@@ -75,12 +78,22 @@ float readOsc(const osc o) {
 }
 
 void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
+	fr (s, shapeCount) {
+		if (!SDL_TryLockMutex(shapeMutexes[s])) {
+			if (shapes[s].data != shapesIn[s].data) {
+				free(shapes[s].data);
+				shapes[s].data = shapesIn[s].data;
+			}
+			shapes[s].count = shapesIn[s].count;
+			SDL_UnlockMutex(shapeMutexes[s]);
+		}
+	}
 	float *floatStream = (float*)byteStream;
 	const int enabledVoiceCount = btArCountSet(voicesEnable, voiceCount);
-	const float globalVolumeF = (float)SDL_AtomicGet(&globalVolume)/atomic_max;
-	fr (s, floatStreamSize) floatStream[s] = 0; // silence
-	if (globalVolumeF <= practicallySilent || enabledVoiceCount < 1) return;
+	fr (s, floatStreamSize) floatStream[s] = 0;
+	if (enabledVoiceCount < 1) return;
 	fr (v, voiceCount) {
+		SDL_LockMutex(voiceMutexes[v]);_sdlec;
 		if (!btArRead(voicesEnable, v)) continue;
 		const double spdModIncrem = voices[v][vo_spdMod].spd / sampleRate;
 		const double ampModIncrem = voices[v][vo_ampMod].spd / sampleRate;
@@ -101,7 +114,9 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 			floatStream[s  ] += sample * leftFactor;
 			floatStream[s+1] += sample * rightFactor;
 		}
+		SDL_UnlockMutex(voiceMutexes[v]);_sdlec;
 	}
+	const float globalVolumeF = (float)SDL_AtomicGet(&globalVolume)/atomic_max;_sdlec;
 	if (enabledVoiceCount > 1) {
 		const float amp = globalVolumeF * (1.0/enabledVoiceCount);
 		fr (s, floatStreamSize) floatStream[s] *= amp;
