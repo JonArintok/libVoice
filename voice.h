@@ -24,9 +24,10 @@ void unpauseAudio(void);
 void pauseAudio(void);
 void setGlobalVolume(float v);
 
-void shapeFromMem(int shapeIndex, int sampleCount, float *mem);
-void shapeFromSin(int shapeIndex, int sampleCount);
-void shapeFromSaw(int shapeIndex, int sampleCount);
+void shapeFromMem  (int shapeIndex, int sampleCount, float *mem);
+void shapeFromSine (int shapeIndex, int sampleCount, float low, float high);
+void shapeFromSaw  (int shapeIndex, int sampleCount, float low, float high);
+void shapeFromPulse(int shapeIndex, int sampleCount, float low, float high, float pulseWidth);
 
 void setOscShape(int voiceIndex, int voicePart, int shapeIndex);
 void setOscAmp  (int voiceIndex, int voicePart, float amp);
@@ -35,5 +36,4 @@ void setOscSpd  (int voiceIndex, int voicePart, float spd);
 void setOsc     (int voiceIndex, int voicePart, osc o);
 void setVoice   (int voiceIndex, voice v);
 
-void buildSineWave(float *data, int sampleCount);
 double freqFromPitch(double pitch);

@@ -41,23 +41,37 @@ SDL_mutex **shapeMutexes = NULL;
 
 void shapeFromMem(int shapeIndex, int sampleCount, float *mem) {
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
-	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sampleCount);
+	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = sampleCount;
 	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = mem[s];
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
-void shapeFromSin(int shapeIndex, int sampleCount) {
+void shapeFromSine(int shapeIndex, int sampleCount, float low, float high) {
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
-	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sampleCount);
+	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = sampleCount;
-	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = sin(s*(tau/sampleCount));
+	fr (s, sampleCount) {
+		shapesIn[shapeIndex].data[s] = low + (high-low)*sin(s*(tau/sampleCount));
+	}
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
-void shapeFromSaw(int shapeIndex, int sampleCount) {
+void shapeFromSaw(int shapeIndex, int sampleCount, float low, float high) {
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
-	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sampleCount);
+	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = sampleCount;
-	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = 1.0 - ((float)s/sampleCount)*2;
+	fr (s, sampleCount) {
+		shapesIn[shapeIndex].data[s] = low + (high-low)*(1.0 - ((float)s/sampleCount)*2);
+	}
+	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
+}
+void shapeFromPulse(int shapeIndex, int sampleCount, float low, float high, float pulseWidth) {
+	const float pw = pulseWidth > 1 ? 1.0 : (pulseWidth < 0 ? 0.0 : pulseWidth);
+	SDL_LockMutex(shapeMutexes[shapeIndex]);
+	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
+	shapesIn[shapeIndex].count = sampleCount;
+	int s = 0;
+	for (; s < sampleCount*pw; s++) shapesIn[shapeIndex].data[s] = high;
+	for (; s < sampleCount;    s++) shapesIn[shapeIndex].data[s] = low;
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
 
@@ -120,47 +134,47 @@ float readOsc(const osc o) {
 }
 
 void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
-	fr (s, shapeCount) {
-		if (!SDL_TryLockMutex(shapeMutexes[s])) {
-			shapes[s] = shapesIn[s];
-			SDL_UnlockMutex(shapeMutexes[s]);
-		}
-	}
-	float *floatStream = (float*)byteStream;
-	const int enabledVoiceCount = btArCountSet(voicesEnable, voiceCount);
-	fr (s, floatStreamSize) floatStream[s] = 0;
-	if (enabledVoiceCount < 1) return;
-	fr (v, voiceCount) {
-		SDL_LockMutex(voiceMutexes[v]);_sdlec;
-		if (!btArRead(voicesEnable, v)) continue;
-		const double spdModIncrem = voices[v][vo_spdMod].spd / sampleRate;
-		const double ampModIncrem = voices[v][vo_ampMod].spd / sampleRate;
-		const double rightFactor = (voicesPan[v]+1.0)/2.0;
-		const double leftFactor  = 1.0 - rightFactor;
-		for (int s = 0; s < floatStreamSize; s += 2) {
-			voices[v][vo_spdEnv].pos += voices[v][vo_spdEnv].spd / sampleRate;
-			clampOsc(&voices[v][vo_spdEnv]);
-			voices[v][vo_spdMod].pos += spdModIncrem;
-			loopOsc(&voices[v][vo_spdMod]);
-			voices[v][vo_wave].pos += (voices[v][vo_wave].spd * readOsc(voices[v][vo_spdEnv]) * readOsc(voices[v][vo_spdMod])) / sampleRate;
-			loopOsc(&voices[v][vo_wave]);
-			voices[v][vo_ampEnv].pos += voices[v][vo_ampEnv].spd / sampleRate;
-			clampOsc(&voices[v][vo_ampEnv]);
-			voices[v][vo_ampMod].pos += ampModIncrem;
-			loopOsc(&voices[v][vo_ampMod]);
-			const double sample = readOsc(voices[v][vo_wave]) * readOsc(voices[v][vo_ampMod]) * readOsc(voices[v][vo_ampEnv]);
-			floatStream[s  ] += sample * leftFactor;
-			floatStream[s+1] += sample * rightFactor;
-		}
-		SDL_UnlockMutex(voiceMutexes[v]);_sdlec;
-	}
-	const float globalVolumeF = (float)SDL_AtomicGet(&globalVolume)/atomic_max;_sdlec;
-	if (enabledVoiceCount > 1) {
-		const float amp = globalVolumeF * (1.0/enabledVoiceCount);
-		fr (s, floatStreamSize) floatStream[s] *= amp;
-		return;
-	}
-	fr (s, floatStreamSize) floatStream[s] *= globalVolumeF;
+	// fr (s, shapeCount) {
+	// 	if (!SDL_TryLockMutex(shapeMutexes[s])) {
+	// 		shapes[s] = shapesIn[s];
+	// 		SDL_UnlockMutex(shapeMutexes[s]);
+	// 	}
+	// }
+	// float *floatStream = (float*)byteStream;
+	// const int enabledVoiceCount = btArCountSet(voicesEnable, voiceCount);
+	// fr (s, floatStreamSize) floatStream[s] = 0;
+	// if (enabledVoiceCount < 1) return;
+	// fr (v, voiceCount) {
+	// 	SDL_LockMutex(voiceMutexes[v]);_sdlec;
+	// 	if (!btArRead(voicesEnable, v)) continue;
+	// 	const double spdModIncrem = voices[v][vo_spdMod].spd / sampleRate;
+	// 	const double ampModIncrem = voices[v][vo_ampMod].spd / sampleRate;
+	// 	const double rightFactor = (voicesPan[v]+1.0)/2.0;
+	// 	const double leftFactor  = 1.0 - rightFactor;
+	// 	for (int s = 0; s < floatStreamSize; s += 2) {
+	// 		voices[v][vo_spdEnv].pos += voices[v][vo_spdEnv].spd / sampleRate;
+	// 		clampOsc(&voices[v][vo_spdEnv]);
+	// 		voices[v][vo_spdMod].pos += spdModIncrem;
+	// 		loopOsc(&voices[v][vo_spdMod]);
+	// 		voices[v][vo_wave].pos += (voices[v][vo_wave].spd * readOsc(voices[v][vo_spdEnv]) * readOsc(voices[v][vo_spdMod])) / sampleRate;
+	// 		loopOsc(&voices[v][vo_wave]);
+	// 		voices[v][vo_ampEnv].pos += voices[v][vo_ampEnv].spd / sampleRate;
+	// 		clampOsc(&voices[v][vo_ampEnv]);
+	// 		voices[v][vo_ampMod].pos += ampModIncrem;
+	// 		loopOsc(&voices[v][vo_ampMod]);
+	// 		const double sample = readOsc(voices[v][vo_wave]) * readOsc(voices[v][vo_ampMod]) * readOsc(voices[v][vo_ampEnv]);
+	// 		floatStream[s  ] += sample * leftFactor;
+	// 		floatStream[s+1] += sample * rightFactor;
+	// 	}
+	// 	SDL_UnlockMutex(voiceMutexes[v]);_sdlec;
+	// }
+	// const float globalVolumeF = (float)SDL_AtomicGet(&globalVolume)/atomic_max;_sdlec;
+	// if (enabledVoiceCount > 1) {
+	// 	const float amp = globalVolumeF * (1.0/enabledVoiceCount);
+	// 	fr (s, floatStreamSize) floatStream[s] *= amp;
+	// 	return;
+	// }
+	// fr (s, floatStreamSize) floatStream[s] *= globalVolumeF;
 }
 
 SDL_AudioDeviceID audioDevice;
@@ -180,7 +194,7 @@ int initVoices(int initVoiceCount, int initShapeCount) {
 	shapeCount = initShapeCount;
 	shapes = calloc(shapeCount, sizeof(floatArray));
 	shapesIn = calloc(shapeCount, sizeof(floatArray));
-	shapeMutexes = calloc(voiceCount, sizeof(SDL_mutex*));
+	shapeMutexes = calloc(shapeCount, sizeof(SDL_mutex*));
 	fr (s, shapeCount) {shapeMutexes[s] = SDL_CreateMutex();_sdlec;}
 	voiceCount = initVoiceCount;
 	voices = calloc(voiceCount, sizeof(voice));
