@@ -76,6 +76,24 @@ void shapeFromPulse(int shapeIndex, int sampleCount, float low, float high, floa
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
 
+void syncShapes(void) {
+	fr (s, shapeCount) {
+		if (!SDL_TryLockMutex(shapeMutexes[s])) {
+			if (shapesIn[s].count < 0) { // negative count indicates change
+				shapesIn[s].count *= -1;
+				const long newCount = shapesIn[s].count;
+				if (shapes[s].count < newCount) {
+					shapes[s].data = realloc(shapes[s].data, sizeof(float)*newCount);
+				}
+				fr (f, newCount) shapes[s].data[f] = shapesIn[s].data[f];
+				shapes[s].count = newCount;
+			}
+			SDL_UnlockMutex(shapeMutexes[s]);
+		}
+	}
+}
+
+
 int         voiceCount = 0;
 voice      *voices = NULL;
 float      *voicesPan = NULL;    // -1.0 is all left, 1.0 is all right
@@ -134,22 +152,6 @@ float readOsc(const osc o) {
 	return shapes[o.shape].data[(long)(o.pos * (shapes[o.shape].count-1))] * o.amp;
 }
 
-void syncShapes(void) {
-	fr (s, shapeCount) {
-		if (!SDL_TryLockMutex(shapeMutexes[s])) {
-			if (shapesIn[s].count < 0) { // negative count indicates change
-				const long newCount = -1 * shapesIn[s].count;
-				shapesIn[s].count *= -1;
-				if (shapes[s].count < newCount) {
-					shapes[s].data  = realloc(shapes[s].data, sizeof(float));
-				}
-				fr (f, newCount) shapes[s].data = shapesIn[s].data;
-				shapes[s].count = newCount;
-			}
-			SDL_UnlockMutex(shapeMutexes[s]);
-		}
-	}
-}
 
 void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 	syncShapes();
