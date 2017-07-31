@@ -120,6 +120,14 @@ void setOscSpd(int voiceIndex, int voicePart, float spd) {
 	voices[voiceIndex][voicePart].spd = spd;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
+void setOscSpdFromFreq(int voiceIndex, int voicePart, double freq) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	double shapeLength = shapes[voices[voiceIndex][voicePart].shape].count;
+	SDL_UnlockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	voices[voiceIndex][voicePart].spd = shapeLength/freq;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
 void setOsc(int voiceIndex, int voicePart, osc o) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	voices[voiceIndex][voicePart] = o;

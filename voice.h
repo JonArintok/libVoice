@@ -33,6 +33,7 @@ void setOscShape(int voiceIndex, int voicePart, int shapeIndex);
 void setOscAmp  (int voiceIndex, int voicePart, float amp);
 void setOscPos  (int voiceIndex, int voicePart, float pos);
 void setOscSpd  (int voiceIndex, int voicePart, float spd);
+void setOscSpdFromFreq(int voiceIndex, int voicePart, double freq);
 void setOsc     (int voiceIndex, int voicePart, osc o);
 void setVoice   (int voiceIndex, voice v);
 

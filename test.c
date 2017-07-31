@@ -30,17 +30,23 @@ int main(int argc, char **argv) {
 	shapeFromSine (shape_sineMod,   512,  0, 1);
 	shapeFromSaw  (shape_sawWav,    512, -1, 1);
 	shapeFromSaw  (shape_sawMod,    512,  0, 1);
-	shapeFromPulse(shape_squareWav, 512, -1, 1, 0.5);
-	shapeFromPulse(shape_squareMod, 512,  0, 1, 0.5);
-	shapeFromPulse(shape_rectWav,   512, -1, 1, 0.2);
-	shapeFromPulse(shape_rectMod,   512,  0, 1, 0.2);
-	//voice v1 = {
-	//	{shape_sineWav, 1.0, 0.0,
-	//}
+	shapeFromPulse(shape_squareWav,   2, -1, 1, 0.5);
+	shapeFromPulse(shape_squareMod,   2,  0, 1, 0.5);
+	shapeFromPulse(shape_rectWav,    10, -1, 1, 0.3);
+	shapeFromPulse(shape_rectMod,    10,  0, 1, 0.3);
+	{
+		voice v = {
+			{shape_sineWav, 1.0, 0.0, 0.0}, // wave
+			{shape_oneOne,  1.0, 0.0, 1.0}, // ampMod
+			{shape_oneOne,  1.0, 0.0, 1.0}, // spdMod
+			{shape_oneOne,  1.0, 0.0, 1.0}, // ampEnv
+			{shape_oneOne,  1.0, 0.0, 1.0}  // spdEnv
+		};
+		setVoice(0, v);
+	}
+	setOscSpdFromFreq(0, vo_wave, 440);
 	unpauseAudio();
-	
-	SDL_Delay(500);
-	
+	SDL_Delay(2000);
 	closeVoices();
 	SDL_Quit();_sdlec;
 	return 0;
