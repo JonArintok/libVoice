@@ -1,17 +1,17 @@
 
 typedef struct {
-	uint32_t shape; // index in shape array
-	float    amp;   // multiply shape output sample
-	float    pos;   // position in shape, 0 to 1
-	float    spd;   // 1.0 results in 1 shape sample per output sample
+	long   shape; // index in shape array
+	double amp;   // multiply shape output sample
+	double pos;   // position in shape, 0 to 1
+	double inc;   // increment pos by this amount for each output sample
 } osc;
 
 enum {
-	vo_wave,   // looped
+	vo_wave,   // looped, negative shape index indicates voice is disabled
 	vo_ampMod, // looped,  multiply wave amp
-	vo_spdMod, // looped,  multiply wave speed
+	vo_incMod, // looped,  multiply wave speed
 	vo_ampEnv, // clamped, multiply wave amp
-	vo_spdEnv, // clamped, multiply wave speed
+	vo_incEnv, // clamped, multiply wave speed
 	vo_oscPerVoice
 };
 typedef osc voice[vo_oscPerVoice];
@@ -25,16 +25,20 @@ void pauseAudio(void);
 void setGlobalVolume(float v);
 
 void shapeFromMem  (int shapeIndex, int sampleCount, float *mem);
-void shapeFromSine (int shapeIndex, int sampleCount, float low, float high);
-void shapeFromSaw  (int shapeIndex, int sampleCount, float low, float high);
-void shapeFromPulse(int shapeIndex, int sampleCount, float low, float high, float pulseWidth);
+void shapeFromSine (int shapeIndex, int sampleCount, double low, double high);
+void shapeFromSaw  (int shapeIndex, int sampleCount, double low, double high);
+void shapeFromPulse(int shapeIndex, int sampleCount, double low, double high, double pulseWidth);
+void syncShapes(void); // never necessary, but sometimes good to call between uploading and unpausing
 
-void setOscShape(int voiceIndex, int voicePart, int shapeIndex);
-void setOscAmp  (int voiceIndex, int voicePart, float amp);
-void setOscPos  (int voiceIndex, int voicePart, float pos);
-void setOscSpd  (int voiceIndex, int voicePart, float spd);
-void setOscSpdFromFreq(int voiceIndex, int voicePart, double freq);
-void setOsc     (int voiceIndex, int voicePart, osc o);
-void setVoice   (int voiceIndex, voice v);
+void setOscShape           (int voiceIndex, int voicePart, int shapeIndex);
+void setOscAmp             (int voiceIndex, int voicePart, double amp);
+void setOscPos             (int voiceIndex, int voicePart, double pos);
+void setOscInc             (int voiceIndex, int voicePart, double inc);
+void setOscIncFromLoopFreq (int voiceIndex, int voicePart, double freq);
+void setOscIncFromPlaySpeed(int voiceIndex, int voicePart, double speed);
+void setOsc                (int voiceIndex, int voicePart, osc o);
+void setVoice              (int voiceIndex, voice v);
+void enableVoice (int voiceIndex);
+void disableVoice(int voiceIndex);
 
 double freqFromPitch(double pitch);

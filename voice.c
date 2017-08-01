@@ -6,7 +6,6 @@
 #include <SDL2/SDL.h>
 
 #include "voice.h"
-#include "bitArray.h"
 #include "misc.h"
 #include "sdlec.h"
 
@@ -47,26 +46,30 @@ void shapeFromMem(int shapeIndex, int sampleCount, float *mem) {
 	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = mem[s];
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
-void shapeFromSine(int shapeIndex, int sampleCount, float low, float high) {
+void shapeFromSine(int shapeIndex, int sampleCount, double low, double high) {
+	const double scale = 2.0/(high-low);
+	const double shift = low + (high-low)/2.0;
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
 	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = -sampleCount;
 	fr (s, sampleCount) {
-		shapesIn[shapeIndex].data[s] = low + (high-low)*sin(s*(tau/sampleCount));
+		shapesIn[shapeIndex].data[s] = sin(s*(tau/sampleCount))*scale + shift;
 	}
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
-void shapeFromSaw(int shapeIndex, int sampleCount, float low, float high) {
+void shapeFromSaw(int shapeIndex, int sampleCount, double low, double high) {
+	const double scale = 2.0/(high-low);
+	const double shift = low + (high-low)/2.0;
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
 	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = -sampleCount;
 	fr (s, sampleCount) {
-		shapesIn[shapeIndex].data[s] = low + (high-low)*(1.0 - ((float)s/sampleCount)*2);
+		shapesIn[shapeIndex].data[s] = (1.0 - ((double)s/sampleCount)*2)*scale + shift;
 	}
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
-void shapeFromPulse(int shapeIndex, int sampleCount, float low, float high, float pulseWidth) {
-	const float pw = pulseWidth > 1 ? 1.0 : (pulseWidth < 0 ? 0.0 : pulseWidth);
+void shapeFromPulse(int shapeIndex, int sampleCount, double low, double high, double pulseWidth) {
+	const double pw = pulseWidth > 1 ? 1.0 : (pulseWidth < 0 ? 0.0 : pulseWidth);
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
 	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = -sampleCount;
@@ -97,7 +100,7 @@ void syncShapes(void) {
 int         voiceCount = 0;
 voice      *voices = NULL;
 float      *voicesPan = NULL;    // -1.0 is all left, 1.0 is all right
-bitBlock_t *voicesEnable = NULL; // voice will be ignored it's bit is false
+SDL_mutex  *voicesEnableMutex = NULL;
 SDL_mutex **voiceMutexes = NULL;
 
 void setOscShape(int voiceIndex, int voicePart, int shapeIndex) {
@@ -105,27 +108,35 @@ void setOscShape(int voiceIndex, int voicePart, int shapeIndex) {
 	voices[voiceIndex][voicePart].shape = shapeIndex;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
-void setOscAmp(int voiceIndex, int voicePart, float amp) {
+void setOscAmp(int voiceIndex, int voicePart, double amp) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	voices[voiceIndex][voicePart].amp = amp;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
-void setOscPos(int voiceIndex, int voicePart, float pos) {
+void setOscPos(int voiceIndex, int voicePart, double pos) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	voices[voiceIndex][voicePart].pos = pos;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
-void setOscSpd(int voiceIndex, int voicePart, float spd) {
+void setOscInc(int voiceIndex, int voicePart, double inc) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
-	voices[voiceIndex][voicePart].spd = spd;
+	voices[voiceIndex][voicePart].inc = inc;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
-void setOscSpdFromFreq(int voiceIndex, int voicePart, double freq) {
+void setOscIncFromLoopFreq(int voiceIndex, int voicePart, double freq) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
 	double shapeLength = shapes[voices[voiceIndex][voicePart].shape].count;
 	SDL_UnlockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
-	voices[voiceIndex][voicePart].spd = shapeLength/freq;
+	voices[voiceIndex][voicePart].inc = (freq/(sampleRate/shapeLength))/shapeLength;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
+void setOscIncFromPlaySpeed(int voiceIndex, int voicePart, double speed) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	double shapeLength = shapes[voices[voiceIndex][voicePart].shape].count;
+	SDL_UnlockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	voices[voiceIndex][voicePart].inc = speed/shapeLength;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
 void setOsc(int voiceIndex, int voicePart, osc o) {
@@ -138,6 +149,17 @@ void setVoice(int voiceIndex, voice v) {
 	fr (o, vo_oscPerVoice) voices[voiceIndex][o] = v[o];
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
+void enableVoice(int voiceIndex) {
+	SDL_LockMutex(voicesEnableMutex);_sdlec;
+	voices[voiceIndex][vo_wave].shape = abs(voices[voiceIndex][vo_wave].shape);
+	SDL_UnlockMutex(voicesEnableMutex);_sdlec;
+}
+void disableVoice(int voiceIndex) {
+	SDL_LockMutex(voicesEnableMutex);_sdlec;
+	voices[voiceIndex][vo_wave].shape = -1*abs(voices[voiceIndex][vo_wave].shape);
+	SDL_UnlockMutex(voicesEnableMutex);_sdlec;
+}
+
 
 void loopOsc(osc *o) {
 	const double p = o->pos;
@@ -148,11 +170,11 @@ void clampOsc(osc *o) {
 	const double p = o->pos;
 	if (p > 1) {
 		o->pos = 1;
-		o->spd = 0;
+		o->inc = 0;
 	}
 	else if (p < 0) {
 		o->pos = 0;
-		o->spd = 0;
+		o->inc = 0;
 	}
 }
 
@@ -161,29 +183,35 @@ float readOsc(const osc o) {
 }
 
 
+// TEMP
+//#define audioHistoryLength 2048
+//float   audioHistory[audioHistoryLength];
+//int     audioHistoryPos = 0;
+
+
+
 void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 	syncShapes();
 	float *floatStream = (float*)byteStream;
-	const int enabledVoiceCount = btArCountSet(voicesEnable, voiceCount);
+	int enabledVoiceCount = 0;
 	fr (s, floatStreamSize) floatStream[s] = 0;
-	if (enabledVoiceCount < 1) return;
 	fr (v, voiceCount) {
 		SDL_LockMutex(voiceMutexes[v]);_sdlec;
-		if (!btArRead(voicesEnable, v)) continue;
-		const double spdModIncrem = voices[v][vo_spdMod].spd / sampleRate;
-		const double ampModIncrem = voices[v][vo_ampMod].spd / sampleRate;
+		if (voices[v][vo_wave].shape < 0) continue;
+		enabledVoiceCount++;
 		const double rightFactor = (voicesPan[v]+1.0)/2.0;
 		const double leftFactor  = 1.0 - rightFactor;
 		for (int s = 0; s < floatStreamSize; s += 2) {
-			voices[v][vo_spdEnv].pos += voices[v][vo_spdEnv].spd / sampleRate;
-			clampOsc(&voices[v][vo_spdEnv]);
-			voices[v][vo_spdMod].pos += spdModIncrem;
-			loopOsc(&voices[v][vo_spdMod]);
-			voices[v][vo_wave].pos += (voices[v][vo_wave].spd * readOsc(voices[v][vo_spdEnv]) * readOsc(voices[v][vo_spdMod])) / sampleRate;
+			voices[v][vo_incEnv].pos += voices[v][vo_incEnv].inc;
+			clampOsc(&voices[v][vo_incEnv]);
+			voices[v][vo_incMod].pos += voices[v][vo_incMod].inc;
+			loopOsc(&voices[v][vo_incMod]);
+			voices[v][vo_wave].pos += voices[v][vo_wave].inc;// (voices[v][vo_wave].inc * readOsc(voices[v][vo_incEnv]) * readOsc(voices[v][vo_incMod]));
 			loopOsc(&voices[v][vo_wave]);
-			voices[v][vo_ampEnv].pos += voices[v][vo_ampEnv].spd / sampleRate;
+			//if (audioHistoryPos < audioHistoryLength) audioHistory[audioHistoryPos++] = readOsc(voices[v][vo_wave]); // TEMP
+			voices[v][vo_ampEnv].pos += voices[v][vo_ampEnv].inc;
 			clampOsc(&voices[v][vo_ampEnv]);
-			voices[v][vo_ampMod].pos += ampModIncrem;
+			voices[v][vo_ampMod].pos += voices[v][vo_ampMod].inc;
 			loopOsc(&voices[v][vo_ampMod]);
 			const double sample = readOsc(voices[v][vo_wave]) * readOsc(voices[v][vo_ampMod]) * readOsc(voices[v][vo_ampEnv]);
 			floatStream[s  ] += sample * leftFactor;
@@ -191,13 +219,13 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 		}
 		SDL_UnlockMutex(voiceMutexes[v]);_sdlec;
 	}
+	if (enabledVoiceCount < 1) return;
 	const float globalVolumeF = (float)SDL_AtomicGet(&globalVolume)/atomic_max;_sdlec;
 	if (enabledVoiceCount > 1) {
-		const float amp = globalVolumeF * (1.0/enabledVoiceCount);
+		const double amp = globalVolumeF / enabledVoiceCount;
 		fr (s, floatStreamSize) floatStream[s] *= amp;
-		return;
 	}
-	fr (s, floatStreamSize) floatStream[s] *= globalVolumeF;
+	else fr (s, floatStreamSize) floatStream[s] *= globalVolumeF;
 }
 
 SDL_AudioDeviceID audioDevice;
@@ -234,12 +262,18 @@ int initVoices(int initVoiceCount, int initShapeCount) {
 	voicesPan = calloc(voiceCount, sizeof(float));
 	voiceMutexes = malloc(sizeof(SDL_mutex*)*voiceCount);
 	fr (v, voiceCount) {voiceMutexes[v] = SDL_CreateMutex();_sdlec;}
-	voicesEnable = btArAlloc(voiceCount);
+	setGlobalVolume(1.0);
 	return 0;
 }
 
 int closeVoices(void) {
 	SDL_CloseAudioDevice(audioDevice);_sdlec;
+	
+	// TEMP
+	//puts("\n________audioHistory________");
+	//fr (s, audioHistoryLength) printf("%4i: %7.6f\n", s, audioHistory[s]);
+	//puts("");
+	
 	fr (s, shapeCount) {
 		SDL_LockMutex(shapeMutexes[s]);
 		free(shapes[s].data);
@@ -252,7 +286,6 @@ int closeVoices(void) {
 	free(shapeMutexes);
 	free(voices);
 	free(voicesPan);
-	free(voicesEnable);
 	fr (v, voiceCount) {SDL_DestroyMutex(voiceMutexes[v]);_sdlec;}
 	free(voiceMutexes);
 	return 0;
