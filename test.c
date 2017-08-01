@@ -46,13 +46,18 @@ int main(int argc, char **argv) {
 		setVoice(0, v);
 	}
 	setOscIncFromLoopFreq(0, vo_wave, 440);
+	puts("unpauseAudio()");
 	unpauseAudio();
 	SDL_Delay(1000);
+	puts("disableVoice(0)");
 	disableVoice(0);
 	SDL_Delay(1000);
+	puts("setGlobalVolume(0.5)");
 	setGlobalVolume(0.5);
+	puts("enableVoice(0)");
 	enableVoice(0);
 	SDL_Delay(1000);
+	puts("closeVoices()");
 	closeVoices();
 	SDL_Quit();_sdlec;
 	return 0;

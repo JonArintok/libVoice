@@ -100,7 +100,6 @@ void syncShapes(void) {
 int         voiceCount = 0;
 voice      *voices = NULL;
 float      *voicesPan = NULL;    // -1.0 is all left, 1.0 is all right
-SDL_mutex  *voicesEnableMutex = NULL;
 SDL_mutex **voiceMutexes = NULL;
 
 void setOscShape(int voiceIndex, int voicePart, int shapeIndex) {
@@ -150,14 +149,14 @@ void setVoice(int voiceIndex, voice v) {
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
 void enableVoice(int voiceIndex) {
-	SDL_LockMutex(voicesEnableMutex);_sdlec;
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	voices[voiceIndex][vo_wave].shape = abs(voices[voiceIndex][vo_wave].shape);
-	SDL_UnlockMutex(voicesEnableMutex);_sdlec;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
 void disableVoice(int voiceIndex) {
-	SDL_LockMutex(voicesEnableMutex);_sdlec;
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	voices[voiceIndex][vo_wave].shape = -1*abs(voices[voiceIndex][vo_wave].shape);
-	SDL_UnlockMutex(voicesEnableMutex);_sdlec;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
 
 
@@ -197,7 +196,10 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 	fr (s, floatStreamSize) floatStream[s] = 0;
 	fr (v, voiceCount) {
 		SDL_LockMutex(voiceMutexes[v]);_sdlec;
-		if (voices[v][vo_wave].shape < 0) continue;
+		if (voices[v][vo_wave].shape < 0) {
+			SDL_UnlockMutex(voiceMutexes[v]);_sdlec;
+			continue;
+		}
 		enabledVoiceCount++;
 		const double rightFactor = (voicesPan[v]+1.0)/2.0;
 		const double leftFactor  = 1.0 - rightFactor;
