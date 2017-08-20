@@ -1,9 +1,10 @@
 
 
 #include <SDL2/SDL.h>
+#include <math.h>
 #include "voice.h"
 #include "sdlec.h"
-#include "math.h"
+#include "misc.h"
 
 #define voiceCount 1
 enum {
@@ -46,17 +47,34 @@ int main(int argc, char **argv) {
 		setVoice(0, v);
 	}
 	setOscIncFromLoopFreq(0, vo_wave, 440);
+	
 	puts("unpauseAudio()");
 	unpauseAudio();
 	SDL_Delay(1000);
+	
 	puts("disableVoice(0)");
 	disableVoice(0);
 	SDL_Delay(1000);
-	puts("setGlobalVolume(0.5)");
-	setGlobalVolume(0.5);
+	
 	puts("enableVoice(0)");
 	enableVoice(0);
 	SDL_Delay(1000);
+	
+	fr (i, 100) {
+		float v = (100-i)/100.0;
+		printf("setGlobalVolume(%4.2f)\n", v);
+		setGlobalVolume(v);
+		SDL_Delay(32);
+	}
+	fr (i, 100) {
+		float v = i/100.0;
+		printf("setGlobalVolume(%4.2f)\n", v);
+		setGlobalVolume(v);
+		SDL_Delay(32);
+	}
+	setGlobalVolume(1.0);
+	SDL_Delay(1000);
+	
 	puts("closeVoices()");
 	closeVoices();
 	SDL_Quit();_sdlec;

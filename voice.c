@@ -31,6 +31,9 @@ void setGlobalVolume(float v) {
 	else if (v <= 0) {SDL_AtomicSet(&globalVolume, 0);_sdlec;}
 	else             {SDL_AtomicSet(&globalVolume, v*atomic_max);_sdlec;}
 }
+float getGlobalVolume(void) {
+	return pow((float)SDL_AtomicGet(&globalVolume)/atomic_max, 2);_sdlec;
+}
 
 typedef struct {float *data; long count;} floatArray;
 int         shapeCount;
@@ -222,7 +225,7 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 		SDL_UnlockMutex(voiceMutexes[v]);_sdlec;
 	}
 	if (enabledVoiceCount < 1) return;
-	const float globalVolumeF = (float)SDL_AtomicGet(&globalVolume)/atomic_max;_sdlec;
+	const float globalVolumeF = getGlobalVolume();
 	if (enabledVoiceCount > 1) {
 		const double amp = globalVolumeF / enabledVoiceCount;
 		fr (s, floatStreamSize) floatStream[s] *= amp;
