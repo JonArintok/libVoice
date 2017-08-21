@@ -50,8 +50,8 @@ void shapeFromMem(int shapeIndex, int sampleCount, float *mem) {
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
 void shapeFromSine(int shapeIndex, int sampleCount, double low, double high) {
-	const double scale = 2.0/(high-low);
-	const double shift = low + (high-low)/2.0;
+	const double scale = (high-low)/2.0;
+	const double shift = low + scale;
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
 	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = -sampleCount;
@@ -61,8 +61,8 @@ void shapeFromSine(int shapeIndex, int sampleCount, double low, double high) {
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
 void shapeFromSaw(int shapeIndex, int sampleCount, double low, double high) {
-	const double scale = 2.0/(high-low);
-	const double shift = low + (high-low)/2.0;
+	const double scale = (high-low)/2.0;
+	const double shift = low + scale;
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
 	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = -sampleCount;
@@ -181,7 +181,7 @@ void clampOsc(osc *o) {
 }
 
 float readOsc(const osc o) {
-	return shapes[o.shape].data[(long)(o.pos * (shapes[o.shape].count-1))] * o.amp;
+	return shapes[o.shape].data[(long)(o.pos * (shapes[o.shape].count-1))] * o.amp;// + o.shift;
 }
 
 
@@ -211,7 +211,7 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 			clampOsc(&voices[v][vo_incEnv]);
 			voices[v][vo_incMod].pos += voices[v][vo_incMod].inc;
 			loopOsc(&voices[v][vo_incMod]);
-			voices[v][vo_wave].pos += voices[v][vo_wave].inc;// (voices[v][vo_wave].inc * readOsc(voices[v][vo_incEnv]) * readOsc(voices[v][vo_incMod]));
+			voices[v][vo_wave].pos += (voices[v][vo_wave].inc * readOsc(voices[v][vo_incEnv]) * readOsc(voices[v][vo_incMod]));
 			loopOsc(&voices[v][vo_wave]);
 			//if (audioHistoryPos < audioHistoryLength) audioHistory[audioHistoryPos++] = readOsc(voices[v][vo_wave]); // TEMP
 			voices[v][vo_ampEnv].pos += voices[v][vo_ampEnv].inc;
@@ -296,5 +296,8 @@ int closeVoices(void) {
 	return 0;
 }
 
-void unpauseAudio(void) {SDL_PauseAudioDevice(audioDevice, 0);_sdlec;}
-void   pauseAudio(void) {SDL_PauseAudioDevice(audioDevice, 1);_sdlec;}
+void unpauseAudio(void) {
+	syncShapes();
+	SDL_PauseAudioDevice(audioDevice, 0);_sdlec;
+}
+void pauseAudio(void) {SDL_PauseAudioDevice(audioDevice, 1);_sdlec;}

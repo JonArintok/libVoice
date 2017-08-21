@@ -1,7 +1,8 @@
 
 typedef struct {
 	long   shape; // index in shape array
-	double amp;   // multiply shape output sample
+	//float  shift; // add to shape output sample
+	float  amp;   // multiply shape output sample
 	double pos;   // position in shape, 0 to 1
 	double inc;   // increment pos by this amount for each output sample
 } osc;
@@ -22,13 +23,12 @@ int closeVoices(void);
 
 void unpauseAudio(void);
 void pauseAudio(void);
-void setGlobalVolume(float v);
+void setGlobalVolume(float v); // exponential
 
 void shapeFromMem  (int shapeIndex, int sampleCount, float *mem);
 void shapeFromSine (int shapeIndex, int sampleCount, double low, double high);
 void shapeFromSaw  (int shapeIndex, int sampleCount, double low, double high);
 void shapeFromPulse(int shapeIndex, int sampleCount, double low, double high, double pulseWidth);
-void syncShapes(void); // never necessary, but sometimes good to call between uploading and unpausing
 
 void setOscShape           (int voiceIndex, int voicePart, int shapeIndex);
 void setOscAmp             (int voiceIndex, int voicePart, double amp);
