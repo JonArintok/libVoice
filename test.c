@@ -12,13 +12,9 @@ enum {
 enum {
 	shape_oneOne,
 	shape_sineWav,
-	shape_sineMod,
 	shape_sawWav,
-	shape_sawMod,
 	shape_squareWav,
-	shape_squareMod,
 	shape_rectWav,
-	shape_rectMod,
 	shape_COUNT
 };
 
@@ -29,23 +25,19 @@ int main(int argc, char **argv) {
 		float oneOne[1] = {1};
 		shapeFromMem(shape_oneOne, 1, oneOne);
 	}
-	shapeFromSine (shape_sineWav, 512, -1,   1);
-	shapeFromSine (shape_sineMod, 512,  0, 1);
-	shapeFromSaw  (shape_sawWav,  512, -1,   1);
-	shapeFromSaw  (shape_sawMod,  512,  0, 1);
-	shapeFromPulse(shape_squareWav, 2, -1,   1, 0.5);
-	shapeFromPulse(shape_squareMod, 2,  0,   1, 0.5);
-	shapeFromPulse(shape_rectWav,  10, -1,   1, 0.3);
-	shapeFromPulse(shape_rectMod,  10,  0,   1, 0.3);
+	shapeFromSine (shape_sineWav, 512);
+	shapeFromSaw  (shape_sawWav,  512);
+	shapeFromPulse(shape_squareWav, 2, 0.5);
+	shapeFromPulse(shape_rectWav,  10, 0.3);
 	
 	{
 		voice v = {
-			// 
-			{shape_sineWav, 1.0, 0.0, 0.0}, // wave
-			{shape_oneOne,  1.0, 0.0, 1.0}, // ampMod
-			{shape_oneOne,  1.0, 0.0, 1.0}, // spdMod
-			{shape_oneOne,  1.0, 0.0, 1.0}, // ampEnv
-			{shape_oneOne,  1.0, 0.0, 1.0}  // spdEnv
+			// shape,         shift, amp,  pos, inc
+			{  shape_sineWav, 0.0,   1.0,  0.0, 0.0 }, // wave
+			{  shape_oneOne,  0.0,   0.75, 0.0, 1.0 }, // ampMod
+			{  shape_oneOne,  0.0,   1.0,  0.0, 1.0 }, // spdMod
+			{  shape_oneOne,  0.0,   1.0,  0.0, 1.0 }, // ampEnv
+			{  shape_oneOne,  0.0,   1.0,  0.0, 1.0 }  // spdEnv
 		};
 		setVoice(voice_sine, v);
 	}
@@ -55,19 +47,21 @@ int main(int argc, char **argv) {
 	unpauseAudio();
 	SDL_Delay(1000); puts("");
 	
-	puts("setOscIncFromLoopFreq(voice_sine, vo_ampMod, 2.0)");
-	setOscIncFromLoopFreq(voice_sine, vo_ampMod, 4.0);
-	puts("setOscShape(voice_sine, vo_ampMod, shape_sawMod)");
-	setOscShape(voice_sine, vo_ampMod, shape_sawMod);
-	puts("setOscAmp(voice_sine, vo_ampMod, 0.5)");
-	setOscAmp(voice_sine, vo_ampMod, 0.5);
+	puts(
+		"setOscIncFromLoopFreq(voice_sine, vo_ampMod, 4.0);\n"
+		"setOscShape(voice_sine, vo_ampMod, shape_sawWav);\n"
+		"setOscShift(voice_sine, vo_ampMod, 0.75);"
+	);
+	setOscIncFromLoopFreq(voice_sine, vo_ampMod, 5.0); // pulse 5 times per second
+	setOscShape(voice_sine, vo_ampMod, shape_sawWav);
+	setOscShift(voice_sine, vo_ampMod, 0.75);
+	for (float a = 0.0; a <= 0.24; a += 0.005) {
+		printf("setOscAmp(%4.2f)\n", a);
+		setOscAmp(voice_sine, vo_ampMod, a);
+		SDL_Delay(16);
+	}
 	SDL_Delay(2000); puts("");
 	
-	puts("setOscIncFromLoopFreq(voice_sine, vo_ampMod, 2.0)");
-	setOscIncFromLoopFreq(voice_sine, vo_incMod, 8.0);
-	puts("setOscShape(voice_sine, vo_ampMod, shape_sawMod)");
-	setOscShape(voice_sine, vo_ampMod, shape_sawMod);
-	SDL_Delay(2000); puts("");
 	
 	
 	puts("disableVoice(voice_sine)");

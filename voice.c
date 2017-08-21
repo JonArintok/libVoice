@@ -9,6 +9,8 @@
 #include "misc.h"
 #include "sdlec.h"
 
+//#define LOG_AUDIO_HISTORY
+
 
 #define atomic_t SDL_atomic_t
 #define atomic_max INT32_MAX // not sure if this is right...
@@ -49,36 +51,32 @@ void shapeFromMem(int shapeIndex, int sampleCount, float *mem) {
 	fr (s, sampleCount) shapesIn[shapeIndex].data[s] = mem[s];
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
-void shapeFromSine(int shapeIndex, int sampleCount, double low, double high) {
-	const double scale = (high-low)/2.0;
-	const double shift = low + scale;
+void shapeFromSine(int shapeIndex, int sampleCount) {
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
 	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = -sampleCount;
 	fr (s, sampleCount) {
-		shapesIn[shapeIndex].data[s] = sin(s*(tau/sampleCount))*scale + shift;
+		shapesIn[shapeIndex].data[s] = sin(s*(tau/sampleCount));
 	}
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
-void shapeFromSaw(int shapeIndex, int sampleCount, double low, double high) {
-	const double scale = (high-low)/2.0;
-	const double shift = low + scale;
+void shapeFromSaw(int shapeIndex, int sampleCount) {
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
 	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = -sampleCount;
 	fr (s, sampleCount) {
-		shapesIn[shapeIndex].data[s] = (1.0 - ((double)s/sampleCount)*2)*scale + shift;
+		shapesIn[shapeIndex].data[s] = (1.0 - ((double)s/sampleCount)*2);
 	}
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
-void shapeFromPulse(int shapeIndex, int sampleCount, double low, double high, double pulseWidth) {
+void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth) {
 	const double pw = pulseWidth > 1 ? 1.0 : (pulseWidth < 0 ? 0.0 : pulseWidth);
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
 	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = -sampleCount;
 	int s = 0;
-	for (; s < sampleCount*pw; s++) shapesIn[shapeIndex].data[s] = high;
-	for (; s < sampleCount;    s++) shapesIn[shapeIndex].data[s] = low;
+	for (; s < sampleCount*pw; s++) shapesIn[shapeIndex].data[s] =  1.0;
+	for (; s < sampleCount;    s++) shapesIn[shapeIndex].data[s] = -1.0;
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
 
@@ -108,6 +106,11 @@ SDL_mutex **voiceMutexes = NULL;
 void setOscShape(int voiceIndex, int voicePart, int shapeIndex) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	voices[voiceIndex][voicePart].shape = shapeIndex;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
+void setOscShift(int voiceIndex, int voicePart, double shift) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	voices[voiceIndex][voicePart].shift = shift;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
 void setOscAmp(int voiceIndex, int voicePart, double amp) {
@@ -181,15 +184,15 @@ void clampOsc(osc *o) {
 }
 
 float readOsc(const osc o) {
-	return shapes[o.shape].data[(long)(o.pos * (shapes[o.shape].count-1))] * o.amp;// + o.shift;
+	return shapes[o.shape].data[(long)(o.pos * (shapes[o.shape].count-1))] * o.amp + o.shift;
 }
 
 
-// TEMP
-//#define audioHistoryLength 2048
-//float   audioHistory[audioHistoryLength];
-//int     audioHistoryPos = 0;
-
+#ifdef LOG_AUDIO_HISTORY
+#define audioHistoryLength 2048
+float   audioHistory[audioHistoryLength];
+int     audioHistoryPos = 0;
+#endif
 
 
 void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
@@ -213,7 +216,9 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 			loopOsc(&voices[v][vo_incMod]);
 			voices[v][vo_wave].pos += (voices[v][vo_wave].inc * readOsc(voices[v][vo_incEnv]) * readOsc(voices[v][vo_incMod]));
 			loopOsc(&voices[v][vo_wave]);
-			//if (audioHistoryPos < audioHistoryLength) audioHistory[audioHistoryPos++] = readOsc(voices[v][vo_wave]); // TEMP
+			#ifdef LOG_AUDIO_HISTORY
+			if (audioHistoryPos < audioHistoryLength) audioHistory[audioHistoryPos++] = readOsc(voices[v][vo_wave]); // TEMP
+			#endif
 			voices[v][vo_ampEnv].pos += voices[v][vo_ampEnv].inc;
 			clampOsc(&voices[v][vo_ampEnv]);
 			voices[v][vo_ampMod].pos += voices[v][vo_ampMod].inc;
@@ -274,10 +279,11 @@ int initVoices(int initVoiceCount, int initShapeCount) {
 int closeVoices(void) {
 	SDL_CloseAudioDevice(audioDevice);_sdlec;
 	
-	// TEMP
-	//puts("\n________audioHistory________");
-	//fr (s, audioHistoryLength) printf("%4i: %7.6f\n", s, audioHistory[s]);
-	//puts("");
+	#ifdef LOG_AUDIO_HISTORY
+	puts("\n________audioHistory________");
+	fr (s, audioHistoryLength) printf("%4i: %7.6f\n", s, audioHistory[s]);
+	puts("");
+	#endif
 	
 	fr (s, shapeCount) {
 		SDL_LockMutex(shapeMutexes[s]);

@@ -1,7 +1,7 @@
 
 typedef struct {
 	long   shape; // index in shape array
-	//float  shift; // add to shape output sample
+	float  shift; // add to shape output sample
 	float  amp;   // multiply shape output sample
 	double pos;   // position in shape, 0 to 1
 	double inc;   // increment pos by this amount for each output sample
@@ -26,11 +26,12 @@ void pauseAudio(void);
 void setGlobalVolume(float v); // exponential
 
 void shapeFromMem  (int shapeIndex, int sampleCount, float *mem);
-void shapeFromSine (int shapeIndex, int sampleCount, double low, double high);
-void shapeFromSaw  (int shapeIndex, int sampleCount, double low, double high);
-void shapeFromPulse(int shapeIndex, int sampleCount, double low, double high, double pulseWidth);
+void shapeFromSine (int shapeIndex, int sampleCount);
+void shapeFromSaw  (int shapeIndex, int sampleCount);
+void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth);
 
 void setOscShape           (int voiceIndex, int voicePart, int shapeIndex);
+void setOscShift           (int voiceIndex, int voicePart, double shift);
 void setOscAmp             (int voiceIndex, int voicePart, double amp);
 void setOscPos             (int voiceIndex, int voicePart, double pos);
 void setOscInc             (int voiceIndex, int voicePart, double inc);
