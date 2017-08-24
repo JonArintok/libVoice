@@ -29,6 +29,7 @@ void shapeFromMem  (int shapeIndex, int sampleCount, float *mem);
 void shapeFromSine (int shapeIndex, int sampleCount);
 void shapeFromSaw  (int shapeIndex, int sampleCount);
 void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth);
+void shapeFromArp  (int shapeIndex, int stepCount, float *arpSteps);
 
 void setOscShape           (int voiceIndex, int voicePart, int shapeIndex);
 void setOscShift           (int voiceIndex, int voicePart, double shift);
@@ -39,6 +40,7 @@ void setOscIncFromLoopFreq (int voiceIndex, int voicePart, double freq);
 void setOscIncFromPlaySpeed(int voiceIndex, int voicePart, double speed);
 void setOsc                (int voiceIndex, int voicePart, osc o);
 void setVoice              (int voiceIndex, voice v);
+void restartVoice(int voiceIndex); // set all osc pos to 0
 void enableVoice (int voiceIndex);
 void disableVoice(int voiceIndex);
 

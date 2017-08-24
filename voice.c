@@ -79,6 +79,9 @@ void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth) {
 	for (; s < sampleCount;    s++) shapesIn[shapeIndex].data[s] = -1.0;
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
+void shapeFromArp(int shapeIndex, int stepCount, float *arpSteps) {
+	
+}
 
 void syncShapes(void) {
 	fr (s, shapeCount) {
@@ -154,6 +157,11 @@ void setVoice(int voiceIndex, voice v) {
 	fr (o, vo_oscPerVoice) voices[voiceIndex][o] = v[o];
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
+void restartVoice(int voiceIndex) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	fr (o, vo_oscPerVoice) voices[voiceIndex][o].pos = 0;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
 void enableVoice(int voiceIndex) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	voices[voiceIndex][vo_wave].shape = abs(voices[voiceIndex][vo_wave].shape);
@@ -216,14 +224,14 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 			loopOsc(&voices[v][vo_incMod]);
 			voices[v][vo_wave].pos += (voices[v][vo_wave].inc * readOsc(voices[v][vo_incEnv]) * readOsc(voices[v][vo_incMod]));
 			loopOsc(&voices[v][vo_wave]);
-			#ifdef LOG_AUDIO_HISTORY
-			if (audioHistoryPos < audioHistoryLength) audioHistory[audioHistoryPos++] = readOsc(voices[v][vo_wave]); // TEMP
-			#endif
 			voices[v][vo_ampEnv].pos += voices[v][vo_ampEnv].inc;
 			clampOsc(&voices[v][vo_ampEnv]);
 			voices[v][vo_ampMod].pos += voices[v][vo_ampMod].inc;
 			loopOsc(&voices[v][vo_ampMod]);
 			const double sample = readOsc(voices[v][vo_wave]) * readOsc(voices[v][vo_ampMod]) * readOsc(voices[v][vo_ampEnv]);
+			#ifdef LOG_AUDIO_HISTORY
+			if (audioHistoryPos < audioHistoryLength) audioHistory[audioHistoryPos++] = sample; // TEMP
+			#endif
 			floatStream[s  ] += sample * leftFactor;
 			floatStream[s+1] += sample * rightFactor;
 		}
@@ -281,7 +289,11 @@ int closeVoices(void) {
 	
 	#ifdef LOG_AUDIO_HISTORY
 	puts("\n________audioHistory________");
-	fr (s, audioHistoryLength) printf("%4i: %7.6f\n", s, audioHistory[s]);
+	fr (s, audioHistoryLength) {
+		printf("%4i: %7.6f", s, audioHistory[s]);
+		if (audioHistory[s] > 1 || audioHistory[s] < -1) puts("CLIPPING!");
+		else puts("");
+	}
 	puts("");
 	#endif
 	
