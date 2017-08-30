@@ -1,5 +1,5 @@
 // "frequency" or "freq" refers to a Hz value, and "pitch" refers to
-// a numeric musical note with 0 representing C0, 12 for C1, etc..
+// a numeric musical note with 0 for C0, 12 for C1, etc..
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
@@ -23,10 +23,10 @@ double freqFromPitch(double pitch) {
 	return pow(chromaticRatio, pitch-A4pitch)*A4freq;
 }
 
-uint32_t sampleRate = 48000;
-uint32_t frameRate = 60;
+uint32_t sampleRate = 48000; // may be changed by initVoices(), but not after
 uint32_t floatStreamSize = 1024; // must be a power of 2
 atomic_t globalVolume = {0};
+
 
 void setGlobalVolume(float v) {
 	if      (v >= 1) {SDL_AtomicSet(&globalVolume, atomic_max);_sdlec;}
@@ -131,7 +131,7 @@ void setOscInc(int voiceIndex, int voicePart, double inc) {
 	voices[voiceIndex][voicePart].inc = inc;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
-void setOscIncFromLoopFreq(int voiceIndex, int voicePart, double freq) {
+void setOscIncFromFreq(int voiceIndex, int voicePart, double freq) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
 	double shapeLength = shapes[voices[voiceIndex][voicePart].shape].count;
@@ -139,7 +139,15 @@ void setOscIncFromLoopFreq(int voiceIndex, int voicePart, double freq) {
 	voices[voiceIndex][voicePart].inc = (freq/(sampleRate/shapeLength))/shapeLength;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
-void setOscIncFromPlaySpeed(int voiceIndex, int voicePart, double speed) {
+void setOscIncFromPeriod(int voiceIndex, int voicePart, double period) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	double shapeLength = shapes[voices[voiceIndex][voicePart].shape].count;
+	SDL_UnlockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	voices[voiceIndex][voicePart].inc = (shapeLength/sampleRate)/(period*sampleRate);
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
+void setOscIncFromSpeed(int voiceIndex, int voicePart, double speed) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
 	double shapeLength = shapes[voices[voiceIndex][voicePart].shape].count;
@@ -173,7 +181,7 @@ void disableVoice(int voiceIndex) {
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
 
-
+// the following functions expect the containing voice to be locked already
 void loopOsc(osc *o) {
 	const double p = o->pos;
 	if      (p > 1) o->pos -= (long)p;
@@ -181,14 +189,8 @@ void loopOsc(osc *o) {
 }
 void clampOsc(osc *o) {
 	const double p = o->pos;
-	if (p > 1) {
-		o->pos = 1;
-		o->inc = 0;
-	}
-	else if (p < 0) {
-		o->pos = 0;
-		o->inc = 0;
-	}
+	if      (p > 1) o->pos = 1;
+	else if (p < 0) o->pos = 0;
 }
 
 float readOsc(const osc o) {

@@ -25,23 +25,24 @@ void unpauseAudio(void);
 void pauseAudio(void);
 void setGlobalVolume(float v); // exponential
 
+double freqFromPitch(double pitch);
+
 void shapeFromMem  (int shapeIndex, int sampleCount, float *mem);
 void shapeFromSine (int shapeIndex, int sampleCount);
 void shapeFromSaw  (int shapeIndex, int sampleCount);
 void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth);
 void shapeFromArp  (int shapeIndex, int stepCount, float *arpSteps);
 
-void setOscShape           (int voiceIndex, int voicePart, int shapeIndex);
-void setOscShift           (int voiceIndex, int voicePart, double shift);
-void setOscAmp             (int voiceIndex, int voicePart, double amp);
-void setOscPos             (int voiceIndex, int voicePart, double pos);
-void setOscInc             (int voiceIndex, int voicePart, double inc);
-void setOscIncFromLoopFreq (int voiceIndex, int voicePart, double freq);
-void setOscIncFromPlaySpeed(int voiceIndex, int voicePart, double speed);
-void setOsc                (int voiceIndex, int voicePart, osc o);
-void setVoice              (int voiceIndex, voice v);
-void restartVoice(int voiceIndex); // set all osc pos to 0
+void setOscShape        (int voiceIndex, int voicePart, int shapeIndex);
+void setOscShift        (int voiceIndex, int voicePart, double shift);
+void setOscAmp          (int voiceIndex, int voicePart, double amp);
+void setOscPos          (int voiceIndex, int voicePart, double pos);
+void setOscInc          (int voiceIndex, int voicePart, double inc);
+void setOscIncFromFreq  (int voiceIndex, int voicePart, double freq); // in Hz
+void setOscIncFromPeriod(int voiceIndex, int voicePart, double period); // in seconds
+void setOscIncFromSpeed (int voiceIndex, int voicePart, double speed); // input samples per output sampes
+void setOsc             (int voiceIndex, int voicePart, osc o);
+void setVoice           (int voiceIndex, voice v);
+void restartVoice(int voiceIndex); // set all osc positions to 0
 void enableVoice (int voiceIndex);
 void disableVoice(int voiceIndex);
-
-double freqFromPitch(double pitch);
