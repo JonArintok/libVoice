@@ -35,33 +35,55 @@ int main(int argc, char **argv) {
 			// shape,         shift, amp,  pos, inc
 			{  shape_sineWav, 0.0,   1.0,  0.0, 0.0 }, // wave
 			{  shape_sawWav,  0.75,  0.0,  0.0, 1.0 }, // ampMod
-			{  shape_sineWav, 0.75,  0.0,  0.0, 1.0 }, // spdMod
-			{  shape_oneOne,  0.5,   0.5,  0.0, 1.0 }, // ampEnv
-			{  shape_oneOne,  0.5,   0.5,  0.0, 1.0 }  // spdEnv
+			{  shape_sineWav, 0.80,  0.0,  0.0, 1.0 }, // spdMod
+			{  shape_oneOne,  0.5,   0.5,  0.0, 0.0 }, // ampEnv
+			{  shape_oneOne,  0.5,   0.5,  0.0, 0.0 }  // spdEnv
 		};
 		setVoice(voice_sine, v);
 	}
 	setOscIncFromFreq(voice_sine, vo_wave, 440.0);
 	setOscIncFromFreq(voice_sine, vo_ampMod, 5.0); // pulse 5 times per second
+	setOscIncFromFreq(voice_sine, vo_incMod, 2.0); // pulse 2 times per second
 	
 	puts("unpauseAudio()");
 	unpauseAudio();
 	SDL_Delay(1000);
-	
-	for (float a = 0.0; a < 0.24; a += 0.005) {
-		printf("setOscAmp(%4.2f)\n", a);
-		setOscAmp(voice_sine, vo_ampMod, a);
-		SDL_Delay(16);
+	{
+		float ama = 0.0;
+		for (; ama < 0.24; ama += 0.005) {
+			printf("setOscAmp(voice_sine, vo_ampMod, %4.2f)\n", ama);
+			setOscAmp(voice_sine, vo_ampMod, ama);
+			SDL_Delay(16);
+		}
+		SDL_Delay(1000);
+		float sma = 0.0;
+		for (; sma < 0.19; sma += 0.005) {
+			printf("setOscAmp(voice_sine, vo_incMod, %4.2f)\n", sma);
+			setOscAmp(voice_sine, vo_incMod, sma);
+			SDL_Delay(16);
+		}
+		SDL_Delay(1000);
+		for (; ama > 0.0; ama -= 0.005) {
+			printf("setOscAmp(voice_sine, vo_ampMod, %4.2f)\n", ama);
+			setOscAmp(voice_sine, vo_ampMod, ama);
+			SDL_Delay(16);
+		}
+		SDL_Delay(1000);
+		for (; sma > 0.0; sma -= 0.005) {
+			printf("setOscAmp(voice_sine, vo_incMod, %4.2f)\n", sma);
+			setOscAmp(voice_sine, vo_incMod, sma);
+			SDL_Delay(16);
+		}
+		SDL_Delay(1000);
 	}
-	SDL_Delay(2000);
 	
 	puts("setOscShape(voice_sine, vo_ampEnv, shape_sawWav)");
 	puts("setOscIncFromPeriod(voice_sine, vo_ampEnv, 1.0)");
-	setOscInc(voice_sine, vo_ampEnv, 0.00002);
 	setOscShape(voice_sine, vo_ampEnv, shape_sawWav);
-	//setOscIncFromPeriod(voice_sine, vo_ampEnv, 1.0); // stretch envelope to last 1 second
+	//setOscInc(voice_sine, vo_ampEnv, 0.00002);
+	setOscIncFromPeriod(voice_sine, vo_ampEnv, 1.0); // stretch envelope to last 1 second
 	restartVoice(voice_sine);
-	SDL_Delay(1000);
+	SDL_Delay(2000);
 	
 	
 	puts("restartVoice(voice_sine)");
@@ -76,16 +98,17 @@ int main(int argc, char **argv) {
 	// puts("disableVoice(voice_sine)");
 	// disableVoice(voice_sine);
 	// SDL_Delay(1000);
-	//
+	
 	// puts("enableVoice(voice_sine)");
 	// enableVoice(voice_sine);
 	// SDL_Delay(1000);
 	
-	for (float v = 1.0; v >= 0.0; v -= 0.01) {
-		printf("setOscAmp(%4.2f)\n", v);
-		setGlobalVolume(v);
-		SDL_Delay(16);
-	}
+	// for (float v = 1.0; v >= 0.0; v -= 0.01) {
+	// 	printf("setOscAmp(%4.2f)\n", v);
+	// 	setGlobalVolume(v);
+	// 	SDL_Delay(16);
+	// }
+	
 	closeVoices();
 	SDL_Quit();_sdlec;
 	return 0;
