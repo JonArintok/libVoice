@@ -49,28 +49,28 @@ int main(int argc, char **argv) {
 	unpauseAudio();
 	SDL_Delay(1000);
 	{
-		float ama = 0.0;
+		double ama = 0.0;
 		for (; ama < 0.24; ama += 0.005) {
-			printf("setOscAmp(voice_00, vo_ampMod, %5.3f)\n", ama);
+			printf("setOscAmp(voice_00, vo_ampMod, %f)\n", ama);
 			setOscAmp(voice_00, vo_ampMod, ama);
 			SDL_Delay(16);
 		}
 		SDL_Delay(1000);
-		float sma = 0.0;
+		double sma = 0.0;
 		for (; sma < 0.02; sma += 0.001) {
-			printf("setOscAmp(voice_00, vo_incMod, %5.3f)\n", sma);
+			printf("setOscAmp(voice_00, vo_incMod, %f)\n", sma);
 			setOscAmp(voice_00, vo_incMod, sma);
 			SDL_Delay(16);
 		}
 		SDL_Delay(1000);
-		for (; ama > 0.0; ama -= 0.005) {
-			printf("setOscAmp(voice_00, vo_ampMod, %5.3f)\n", ama);
+		for (; ama >= 0; ama -= 0.005) {
+			printf("setOscAmp(voice_00, vo_ampMod, %f)\n", ama);
 			setOscAmp(voice_00, vo_ampMod, ama);
 			SDL_Delay(16);
 		}
 		SDL_Delay(1000);
-		for (; sma > 0.0; sma -= 0.001) {
-			printf("setOscAmp(voice_00, vo_incMod, %5.3f)\n", sma);
+		for (; sma >= 0; sma -= 0.001) {
+			printf("setOscAmp(voice_00, vo_incMod, %f)\n", sma);
 			setOscAmp(voice_00, vo_incMod, sma);
 			SDL_Delay(16);
 		}
@@ -130,6 +130,18 @@ int main(int argc, char **argv) {
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
 	SDL_Delay(800);
+	
+	puts("setOscAmp(voice_00, vo_ampMod, 0.24)");
+	puts("setOscAmp(voice_00, vo_incMod, 0.02)");
+	puts("setOscIncFromPeriod(voice_00, vo_ampEnv, 2.0)");
+	puts("setOscIncFromPeriod(voice_00, vo_incEnv, 2.0)");
+	puts("restartVoice(voice_00)");
+	setOscAmp(voice_00, vo_ampMod, 0.24);
+	setOscAmp(voice_00, vo_incMod, 0.02);
+	setOscIncFromPeriod(voice_00, vo_ampEnv, 3.0);
+	setOscIncFromPeriod(voice_00, vo_incEnv, 3.0);
+	restartVoice(voice_00);
+	SDL_Delay(4000);
 	
 	
 	
