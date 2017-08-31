@@ -6,16 +6,23 @@
 #include "sdlec.h"
 
 enum {
-	voice_00,
-	voice_COUNT
-};
-enum {
 	shape_oneOne,
 	shape_sineWav,
 	shape_sawWav,
 	shape_squareWav,
 	shape_rectWav,
 	shape_COUNT
+};
+enum {
+	voice_00,
+	voice_01,
+	voice_02,
+	voice_03,
+	voice_04,
+	voice_05,
+	voice_06,
+	voice_07,
+	voice_COUNT
 };
 
 int main(int argc, char **argv) {
@@ -44,10 +51,38 @@ int main(int argc, char **argv) {
 	setOscIncFromFreq(voice_00, vo_wave, 440.0);
 	setOscIncFromFreq(voice_00, vo_ampMod, 5.0); // pulse 5 times per second
 	setOscIncFromFreq(voice_00, vo_incMod, 8.0); // pulse 2 times per second
+	setGlobalVolume(0);
 	
 	puts("unpauseAudio()");
 	unpauseAudio();
-	SDL_Delay(1000);
+	for (double v = 0.0; v <= 0.9; v += 0.02) {
+		printf("setGlobalVolume(%f)\n", v);
+		setGlobalVolume(v);
+		SDL_Delay(16);
+	}
+	SDL_Delay(1000); puts("");
+	{
+		double p = 0;
+		for (; p > -1.0; p -= 0.1) {
+			printf("setVoicePan(voice_00, %f)\n", p);
+			setVoicePan(voice_00, p);
+			SDL_Delay(16);
+		}
+		SDL_Delay(1000);
+		for (; p < 1.0; p += 0.1) {
+			printf("setVoicePan(voice_00, %f)\n", p);
+			setVoicePan(voice_00, p);
+			SDL_Delay(16);
+		}
+		SDL_Delay(1000);
+		for (; p >= 0.0; p -= 0.1) {
+			printf("setVoicePan(voice_00, %f)\n", p);
+			setVoicePan(voice_00, p);
+			SDL_Delay(16);
+		}
+	}
+	SDL_Delay(1000); puts("");
+	
 	{
 		double ama = 0.0;
 		for (; ama < 0.24; ama += 0.005) {
@@ -55,93 +90,91 @@ int main(int argc, char **argv) {
 			setOscAmp(voice_00, vo_ampMod, ama);
 			SDL_Delay(16);
 		}
-		SDL_Delay(1000);
+		SDL_Delay(1000); puts("");
 		double sma = 0.0;
 		for (; sma < 0.02; sma += 0.001) {
 			printf("setOscAmp(voice_00, vo_incMod, %f)\n", sma);
 			setOscAmp(voice_00, vo_incMod, sma);
 			SDL_Delay(16);
 		}
-		SDL_Delay(1000);
-		for (; ama >= 0; ama -= 0.005) {
+		SDL_Delay(1000); puts("");
+		for (; ama >= 0.0; ama -= 0.005) {
 			printf("setOscAmp(voice_00, vo_ampMod, %f)\n", ama);
 			setOscAmp(voice_00, vo_ampMod, ama);
 			SDL_Delay(16);
 		}
-		SDL_Delay(1000);
+		SDL_Delay(1000); puts("");
 		for (; sma >= 0; sma -= 0.001) {
 			printf("setOscAmp(voice_00, vo_incMod, %f)\n", sma);
 			setOscAmp(voice_00, vo_incMod, sma);
 			SDL_Delay(16);
 		}
-		SDL_Delay(1000);
+		SDL_Delay(1000); puts("");
 	}
 	
 	puts("setOscShape(voice_00, vo_ampEnv, shape_sawWav)");
-	puts("setOscIncFromPeriod(voice_00, vo_ampEnv, 0.5)");
+	puts("setOscIncFromPeriod(voice_00, vo_ampEnv, 0.2)");
+	puts("restartVoice(voice_00)");
 	setOscShape(voice_00, vo_ampEnv, shape_sawWav);
-	setOscIncFromPeriod(voice_00, vo_ampEnv, 0.5); // stretch envelope to last 0.5 seconds
-	
+	setOscIncFromPeriod(voice_00, vo_ampEnv, 0.2); // stretch envelope to last 0.5 seconds
+	restartVoice(voice_00);
+	SDL_Delay(600);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(800);
+	SDL_Delay(600);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(800);
+	SDL_Delay(150);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(200);
+	SDL_Delay(150);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(200);
+	SDL_Delay(150);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(200);
+	SDL_Delay(150);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(200);
-	puts("restartVoice(voice_00)");
-	restartVoice(voice_00);
-	SDL_Delay(800);
+	SDL_Delay(600); puts("");
 	
 	puts("setOscShape(voice_00, vo_incEnv, shape_sawWav)");
-	puts("setOscIncFromPeriod(voice_00, vo_incEnv, 0.5)");
+	puts("setOscIncFromPeriod(voice_00, vo_incEnv, 0.2)");
+	puts("restartVoice(voice_00)");
 	setOscShape(voice_00, vo_incEnv, shape_sawWav);
-	setOscIncFromPeriod(voice_00, vo_incEnv, 0.5);
-	
+	setOscIncFromPeriod(voice_00, vo_incEnv, 0.2);
+	restartVoice(voice_00);
+	SDL_Delay(600);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(800);
+	SDL_Delay(600);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(800);
+	SDL_Delay(150);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(200);
+	SDL_Delay(150);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(200);
+	SDL_Delay(150);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(200);
+	SDL_Delay(150);
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
-	SDL_Delay(200);
-	puts("restartVoice(voice_00)");
-	restartVoice(voice_00);
-	SDL_Delay(800);
+	SDL_Delay(600); puts("");
 	
 	puts("setOscAmp(voice_00, vo_ampMod, 0.24)");
 	puts("setOscAmp(voice_00, vo_incMod, 0.02)");
-	puts("setOscIncFromPeriod(voice_00, vo_ampEnv, 2.0)");
-	puts("setOscIncFromPeriod(voice_00, vo_incEnv, 2.0)");
+	puts("setOscIncFromPeriod(voice_00, vo_ampEnv, 3.0)");
+	puts("setOscIncFromPeriod(voice_00, vo_incEnv, 3.0)");
 	puts("restartVoice(voice_00)");
 	setOscAmp(voice_00, vo_ampMod, 0.24);
 	setOscAmp(voice_00, vo_incMod, 0.02);
 	setOscIncFromPeriod(voice_00, vo_ampEnv, 3.0);
 	setOscIncFromPeriod(voice_00, vo_incEnv, 3.0);
 	restartVoice(voice_00);
-	SDL_Delay(4000);
+	SDL_Delay(4000); puts("");
 	
 	
 	

@@ -25,7 +25,7 @@ double freqFromPitch(double pitch) {
 
 uint32_t sampleRate = 48000; // may be changed by initVoices(), but not after
 uint32_t floatStreamSize = 1024; // must be a power of 2
-atomic_t globalVolume = {0};
+atomic_t globalVolume = {0}; // atomic_max is 1.0
 
 
 void setGlobalVolume(float v) {
@@ -100,7 +100,7 @@ void syncShapes(void) {
 
 int         voiceCount = 0;
 voice      *voices = NULL;
-float      *voicesPan = NULL;    // -1.0 is all left, 1.0 is all right
+float      *voicesPan = NULL;
 SDL_mutex **voiceMutexes = NULL;
 
 void setOscShape(int voiceIndex, int voicePart, int shapeIndex) {
@@ -174,6 +174,12 @@ void disableVoice(int voiceIndex) {
 	voices[voiceIndex][vo_wave].shape = -1*abs(voices[voiceIndex][vo_wave].shape);
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
+void setVoicePan(int voiceIndex, double pan) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	voicesPan[voiceIndex] = pan;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
+
 
 // the following functions expect the containing voice to be locked already
 void loopOsc(osc *o) {
@@ -211,8 +217,8 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 			continue;
 		}
 		enabledVoiceCount++;
-		const double rightFactor = (voicesPan[v]+1.0)/2.0;
-		const double leftFactor  = 1.0 - rightFactor;
+		const double rightFactor = fabs(sin(((voicesPan[v]+1.0)*M_PI)/4));
+		const double leftFactor  = fabs(sin(((voicesPan[v]-1.0)*M_PI)/4));
 		for (int s = 0; s < floatStreamSize; s += 2) {
 			voices[v][vo_incEnv].pos += voices[v][vo_incEnv].inc;
 			clampOsc(&voices[v][vo_incEnv]);

@@ -43,7 +43,8 @@ void setOscIncFromFreq  (int voiceIndex, int voicePart, double freq); // in Hz
 void setOscIncFromPeriod(int voiceIndex, int voicePart, double period); // in seconds
 void setOscIncFromSpeed (int voiceIndex, int voicePart, double speed); // input samples per output sampes
 void setOsc             (int voiceIndex, int voicePart, osc o);
-void setVoice           (int voiceIndex, voice v);
+void setVoice    (int voiceIndex, voice v);
+void setVoicePan (int voiceIndex, double pan); // 0 is centered, -1.0 is all left, 1.0 is all right
 void restartVoice(int voiceIndex); // set all osc positions to 0
 void enableVoice (int voiceIndex);
 void disableVoice(int voiceIndex);
