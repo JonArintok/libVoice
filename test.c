@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 	{
 		voice v = {
 			// shape,         shift, amp,  pos, inc
-			{  shape_sawWav, 0.0,   1.0,  0.0, 0.0 }, // wave
+			{  shape_sawWav,  0.0,   1.0,  0.0, 0.0 }, // wave
 			{  shape_sawWav,  0.75,  0.0,  0.0, 1.0 }, // ampMod
 			{  shape_sineWav, 0.80,  0.0,  0.0, 1.0 }, // spdMod
 			{  shape_oneOne,  0.5,   0.5,  0.0, 0.0 }, // ampEnv
@@ -130,6 +130,8 @@ int main(int argc, char **argv) {
 	puts("restartVoice(voice_00)");
 	restartVoice(voice_00);
 	SDL_Delay(800);
+	
+	
 	
 	// puts("disableVoice(voice_00)");
 	// disableVoice(voice_00);

@@ -15,12 +15,12 @@
 #define atomic_t SDL_atomic_t
 #define atomic_max INT32_MAX // not sure if this is right...
 
-const double chromaticRatio = 1.059463094359295264562; // the 12th root of 2
+const double semitoneRatio = 1.059463094359295264562; // the 12th root of 2
 const double A4freq  = 440.0;
 const double A4pitch =  57.0;
 
 double freqFromPitch(double pitch) {
-	return pow(chromaticRatio, pitch-A4pitch)*A4freq;
+	return pow(semitoneRatio, pitch-A4pitch)*A4freq;
 }
 
 uint32_t sampleRate = 48000; // may be changed by initVoices(), but not after
@@ -78,9 +78,6 @@ void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth) {
 	for (; s < sampleCount*pw; s++) shapesIn[shapeIndex].data[s] =  1.0;
 	for (; s < sampleCount;    s++) shapesIn[shapeIndex].data[s] = -1.0;
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
-}
-void shapeFromArp(int shapeIndex, int stepCount, float *arpSteps) {
-	
 }
 
 void syncShapes(void) {
