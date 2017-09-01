@@ -154,7 +154,7 @@ void setOsc(int voiceIndex, int voicePart, osc o) {
 	voices[voiceIndex][voicePart] = o;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
-void setVoice(int voiceIndex, voice v) {
+void setVoice(int voiceIndex, const voice v) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	fr (o, vo_oscPerVoice) voices[voiceIndex][o] = v[o];
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);

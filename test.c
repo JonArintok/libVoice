@@ -61,6 +61,7 @@ int main(int argc, char **argv) {
 		SDL_Delay(16);
 	}
 	SDL_Delay(1000); puts("");
+	/*
 	{
 		double p = 0;
 		for (; p > -1.0; p -= 0.1) {
@@ -175,22 +176,25 @@ int main(int argc, char **argv) {
 	setOscIncFromPeriod(voice_00, vo_incEnv, 3.0);
 	restartVoice(voice_00);
 	SDL_Delay(4000); puts("");
-	
-	
-	
-	// puts("disableVoice(voice_00)");
-	// disableVoice(voice_00);
-	// SDL_Delay(1000);
-	
-	// puts("enableVoice(voice_00)");
-	// enableVoice(voice_00);
-	// SDL_Delay(1000);
-	
-	// for (float v = 1.0; v >= 0.0; v -= 0.01) {
-	// 	printf("setOscAmp(%4.2f)\n", v);
-	// 	setGlobalVolume(v);
-	// 	SDL_Delay(16);
-	// }
+	*/
+	for (int i = 0; i < voice_COUNT; i++) {
+		const voice v = {
+			// shape,         shift, amp,  pos, inc
+			{  shape_rectWav, 0.0,   1.0,  0.0, 0.0 }, // wave
+			{  shape_oneOne,  0.0,   1.0,  0.0, 0.0 }, // ampMod
+			{  shape_oneOne,  0.0,   1.0,  0.0, 0.0 }, // spdMod
+			{  shape_oneOne,  0.0,   1.0,  0.0, 0.0 }, // ampEnv
+			{  shape_oneOne,  0.0,   1.0,  0.0, 0.0 }  // spdEnv
+		};
+		setVoice(i, v);
+		setVoicePan(i, ((double)i/voice_COUNT)*(-2*(i%2) + 1)); // alternate left/right moving out from center
+		const double basePitch = 46; // C4
+		#define notesPerChord 4
+		const double pitchIntervals[notesPerChord] = {0.0, 4.0, 7.0, 9.0}; // 6 chord
+		setOscIncFromFreq(i, vo_wave, freqFromPitch(basePitch + 12*(i/notesPerChord) + pitchIntervals[i%notesPerChord]));
+		SDL_Delay(500);
+	}
+	SDL_Delay(2000);
 	
 	closeVoices();
 	SDL_Quit();_sdlec;
