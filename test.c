@@ -9,8 +9,7 @@ enum {
 	shape_oneOne,
 	shape_sineWav,
 	shape_sawWav,
-	shape_squareWav,
-	shape_rectWav,
+	shape_pulseWav,
 	shape_COUNT
 };
 enum {
@@ -34,8 +33,7 @@ int main(int argc, char **argv) {
 	}
 	shapeFromSine (shape_sineWav, 512);
 	shapeFromSaw  (shape_sawWav,  512);
-	shapeFromPulse(shape_squareWav, 2, 0.5);
-	shapeFromPulse(shape_rectWav,  10, 0.3);
+	shapeFromPulse(shape_pulseWav, 4, 0.5); // doesn't work with sampleCount 2...
 	
 	{
 		voice v = {
@@ -180,11 +178,11 @@ int main(int argc, char **argv) {
 	for (int i = 0; i < voice_COUNT; i++) {
 		const voice v = {
 			// shape,         shift, amp,  pos, inc
-			{  shape_rectWav, 0.0,   1.0,  0.0, 0.0 }, // wave
-			{  shape_oneOne,  0.0,   1.0,  0.0, 0.0 }, // ampMod
-			{  shape_oneOne,  0.0,   1.0,  0.0, 0.0 }, // spdMod
-			{  shape_oneOne,  0.0,   1.0,  0.0, 0.0 }, // ampEnv
-			{  shape_oneOne,  0.0,   1.0,  0.0, 0.0 }  // spdEnv
+			{  shape_pulseWav, 0.0,   1.0,  0.0, 0.0 }, // wave
+			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }, // ampMod
+			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }, // spdMod
+			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }, // ampEnv
+			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }  // spdEnv
 		};
 		setVoice(i, v);
 		setVoicePan(i, ((double)i/voice_COUNT)*(-2*(i%2) + 1)); // alternate left/right moving out from center
@@ -194,7 +192,24 @@ int main(int argc, char **argv) {
 		setOscIncFromFreq(i, vo_wave, freqFromPitch(basePitch + 12*(i/notesPerChord) + pitchIntervals[i%notesPerChord]));
 		SDL_Delay(500);
 	}
-	SDL_Delay(2000);
+	SDL_Delay(1000); puts("");
+	
+	{
+		double pw = 0.5;
+		for (; pw < 1.0; pw += 0.01) {
+			printf("shapeFromPulse(shape_pulseWav, 64, %f);\n", pw);
+			shapeFromPulse(shape_pulseWav, 64, pw);
+			SDL_Delay(32);
+		}
+		for (; pw >= 0.0; pw -= 0.01) {
+			printf("shapeFromPulse(shape_pulseWav, 64, %f);\n", pw);
+			shapeFromPulse(shape_pulseWav, 64, pw);
+			SDL_Delay(32);
+		}
+	}
+	
+	
+	
 	
 	closeVoices();
 	SDL_Quit();_sdlec;
