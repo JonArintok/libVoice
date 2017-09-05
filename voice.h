@@ -29,10 +29,11 @@ void setGlobalVolume(float v); // exponential
 
 double freqFromPitch(double pitch);
 
-void shapeFromMem  (int shapeIndex, int sampleCount, float *mem);
-void shapeFromSine (int shapeIndex, int sampleCount);
-void shapeFromSaw  (int shapeIndex, int sampleCount);
-void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth);
+void shapeFromMem    (int shapeIndex, int sampleCount, const float *mem);
+void shapeFromSine   (int shapeIndex, int sampleCount);
+void shapeFromSaw    (int shapeIndex, int sampleCount);
+void shapeFromPulse  (int shapeIndex, int sampleCount, double pulseWidth);
+void shapesFromWavFile(int firstShapeIndex, uint32_t shapeCount, const char *path); // will not write more shapes than there are channels in the wav file
 
 void setOscShape        (int voiceIndex, int voicePart, int shapeIndex);
 void setOscShift        (int voiceIndex, int voicePart, double shift);
@@ -42,9 +43,12 @@ void setOscInc          (int voiceIndex, int voicePart, double inc);
 void setOscIncFromFreq  (int voiceIndex, int voicePart, double freq); // in Hz
 void setOscIncFromPeriod(int voiceIndex, int voicePart, double period); // in seconds
 void setOscIncFromSpeed (int voiceIndex, int voicePart, double speed); // input samples per output sampes
-void setOsc             (int voiceIndex, int voicePart, osc o);
+void setOsc             (int voiceIndex, int voicePart, const osc o);
 void setVoice    (int voiceIndex, const voice v);
 void setVoicePan (int voiceIndex, double pan); // 0 is centered, -1.0 is all left, 1.0 is all right
 void restartVoice(int voiceIndex); // set all osc positions to 0
 void enableVoice (int voiceIndex);
 void disableVoice(int voiceIndex);
+void restartVoices(int firstVoiceIndex, int lastVoiceIndex); // guaranteed simultaneous
+void enableVoices (int firstVoiceIndex, int lastVoiceIndex);
+void disableVoices(int firstVoiceIndex, int lastVoiceIndex);
