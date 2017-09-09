@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 	}
 	shapeFromSine (shape_sineWav, 1024);
 	shapeFromSaw  (shape_sawWav,  1024);
-	shapeFromPulse(shape_pulseWav, 4, 0.5); // doesn't work with sampleCount 2...
+	shapeFromPulse(shape_pulseWav, 2, 0.5);
 	
 	{
 		voice v = {
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
 	setOscIncFromFreq(voice_00, vo_incMod, 8.0); // pulse 2 times per second
 	setGlobalVolume(0);
 	
-	/*
+	
 	puts("unpauseAudio()");
 	unpauseAudio();
 	for (double v = 0.0; v <= 0.9; v += 0.02) {
@@ -61,6 +61,7 @@ int main(int argc, char **argv) {
 		SDL_Delay(16);
 	}
 	SDL_Delay(1000); puts("");
+	/*
 	{
 		double p = 0;
 		for (; p > -1.0; p -= 0.1) {
@@ -111,7 +112,7 @@ int main(int argc, char **argv) {
 		}
 		SDL_Delay(1000); puts("");
 	}
-	
+	*/
 	puts("setOscShape(voice_00, vo_ampEnv, shape_sawWav)");
 	puts("setOscIncFromPeriod(voice_00, vo_ampEnv, 0.2)");
 	puts("restartVoice(voice_00)");
@@ -211,11 +212,11 @@ int main(int argc, char **argv) {
 		} while (pw > 0.000);
 	}
 	SDL_Delay(1000); puts("");
-	*/
+	
 	{
 		const voice v = {
 			// shape,             shift, amp,  pos, inc
-			{  shape_fromFile_00, 0.0,   1.0,  0.0, 0.0 }, // wave
+			{  shape_fromFile_00, 0.0,  16.0,  0.0, 0.0 }, // wave
 			{  shape_oneOne,      0.0,   1.0,  0.0, 0.0 }, // ampMod
 			{  shape_oneOne,      0.0,   1.0,  0.0, 0.0 }, // spdMod
 			{  shape_oneOne,      0.0,   1.0,  0.0, 0.0 }, // ampEnv
@@ -225,10 +226,6 @@ int main(int argc, char **argv) {
 	}
 	shapesFromWavFile(shape_fromFile_00, 1, "GoodEveningRadioAudience.wav");
 	setOscIncFromSpeed(0, vo_wave, 1.0);
-	setGlobalVolume(0.9);
-	
-	puts("unpauseAudio()");
-	unpauseAudio();
 	
 	SDL_Delay(5000); puts("");
 	

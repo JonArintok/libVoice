@@ -2,6 +2,7 @@
 // a numeric musical note with 0 for C0, 12 for C1, etc..
 #include <stdio.h>
 #include <stdint.h>
+#include <float.h>
 #include <math.h>
 #include <SDL2/SDL.h>
 
@@ -268,8 +269,9 @@ void clampOsc(osc *o) {
 	else if (p < 0) o->pos = 0;
 }
 
+#define scootch 0.0000001 // to read up to "count" without going out of bounds
 float readOsc(const osc o) {
-	return shapes[o.shape].data[(long)(o.pos * (shapes[o.shape].count-1))] * o.amp + o.shift;
+	return shapes[o.shape].data[(long)(o.pos * (shapes[o.shape].count-scootch))] * o.amp + o.shift;
 }
 
 
@@ -278,8 +280,6 @@ float readOsc(const osc o) {
 float   audioHistory[audioHistoryLength];
 int     audioHistoryPos = 0;
 #endif
-
-void breakPoint(void) {return;}
 
 void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 	syncShapes();
@@ -309,9 +309,6 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 			const double sample = readOsc(voices[v][vo_wave]) * readOsc(voices[v][vo_ampMod]) * readOsc(voices[v][vo_ampEnv]);
 			#ifdef LOG_AUDIO_HISTORY
 			if (audioHistoryPos < audioHistoryLength) audioHistory[audioHistoryPos++] = sample; // TEMP
-			if (audioHistoryPos > 511) {
-				breakPoint();
-			}
 			#endif
 			floatStream[s  ] += sample * leftFactor;
 			floatStream[s+1] += sample * rightFactor;
