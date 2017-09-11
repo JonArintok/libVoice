@@ -9,8 +9,10 @@ enum {
 	shape_oneOne,
 	shape_sineWav,
 	shape_sawWav,
+	shape_squareWav,
 	shape_pulseWav,
-	shape_fromFile_00,
+	shape_goodEvening,
+	shape_hellooo,
 	shape_COUNT
 };
 enum {
@@ -98,60 +100,6 @@ void modulate(void) {
 	SDL_Delay(1000); puts("");
 }
 
-void manyVoices(void) {
-	for (int i = 0; i < voice_COUNT; i++) {
-		const voice v = {
-			// shape,         shift, amp,  pos, inc
-			{  shape_pulseWav, 0.0,   1.0,  0.0, 0.0 }, // wave
-			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }, // ampMod
-			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }, // spdMod
-			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }, // ampEnv
-			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }  // spdEnv
-		};
-		setVoice(i, v);
-		setVoicePan(i, ((double)i/voice_COUNT)*(-2*(i%2) + 1)); // alternate left/right moving out from center
-		const double basePitch = 46; // C4
-		#define notesPerChord 4
-		const double pitchIntervals[notesPerChord] = {0.0, 4.0, 7.0, 9.0}; // 6 chord
-		setOscIncFromFreq(i, vo_wave, freqFromPitch(basePitch + 12*(i/notesPerChord) + pitchIntervals[i%notesPerChord]));
-		SDL_Delay(500);
-	}
-	SDL_Delay(1000); puts("");
-}
-
-void pulseWidthSweep(void) {
-	double pw = 0.49;
-	do {
-		pw += 0.01;
-		printf("shapeFromPulse(shape_pulseWav, 64, %f);\n", pw);
-		shapeFromPulse(shape_pulseWav, 64, pw);
-		SDL_Delay(32);
-	} while (pw < 1.0);
-	do {
-		pw -= 0.010;
-		printf("shapeFromPulse(shape_pulseWav, 64, %f);\n", pw);
-		shapeFromPulse(shape_pulseWav, 64, pw);
-		SDL_Delay(32);
-	} while (pw > 0.000);
-	SDL_Delay(1000); puts("");
-}
-
-void playWavFile(void) {
-	const voice v = {
-		// shape,             shift, amp,  pos, inc
-		{  shape_fromFile_00, 0.0,  16.0,  0.0, 0.0 }, // wave
-		{  shape_oneOne,      0.0,   1.0,  0.0, 0.0 }, // ampMod
-		{  shape_oneOne,      0.0,   1.0,  0.0, 0.0 }, // spdMod
-		{  shape_oneOne,      0.0,   1.0,  0.0, 0.0 }, // ampEnv
-		{  shape_oneOne,      0.0,   1.0,  0.0, 0.0 }  // spdEnv
-	};
-	setVoice(0, v);
-	shapesFromWavFile(shape_fromFile_00, 1, "GoodEveningRadioAudience.wav");
-	setOscIncFromSpeed(0, vo_wave, 1.0);
-	SDL_Delay(5000); puts("");
-}
-
-
 void envelope(void) {
 	puts("setOscShape(voice_00, vo_ampEnv, shape_sawWav)");
 	puts("setOscIncFromPeriod(voice_00, vo_ampEnv, 0.2)");
@@ -218,27 +166,82 @@ void envelope(void) {
 	SDL_Delay(4000); puts("");
 }
 
+void manyVoices(void) {
+	for (int i = 0; i < voice_COUNT; i++) {
+		const voice v = {
+			// shape,          shift, amp,  pos, inc
+			{  shape_pulseWav, 0.0,   1.0,  0.0, 0.0 }, // wave
+			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }, // ampMod
+			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }, // spdMod
+			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }, // ampEnv
+			{  shape_oneOne,   0.0,   1.0,  0.0, 0.0 }  // spdEnv
+		};
+		setVoice(i, v);
+		setVoicePan(i, ((double)i/voice_COUNT)*(-2*(i%2) + 1)); // alternate left/right moving out from center
+		const double basePitch = 46; // C4
+		#define notesPerChord 4
+		const double pitchIntervals[notesPerChord] = {0.0, 4.0, 7.0, 9.0}; // 6 chord
+		setOscIncFromFreq(i, vo_wave, freqFromPitch(basePitch + 12*(i/notesPerChord) + pitchIntervals[i%notesPerChord]));
+		SDL_Delay(500);
+	}
+	SDL_Delay(1000); puts("");
+}
+
+void pulseWidthSweep(void) {
+	double pw = 0.49;
+	do {
+		pw += 0.01;
+		printf("shapeFromPulse(shape_pulseWav, 64, %f);\n", pw);
+		shapeFromPulse(shape_pulseWav, 64, pw);
+		SDL_Delay(32);
+	} while (pw < 1.0);
+	do {
+		pw -= 0.010;
+		printf("shapeFromPulse(shape_pulseWav, 64, %f);\n", pw);
+		shapeFromPulse(shape_pulseWav, 64, pw);
+		SDL_Delay(32);
+	} while (pw > 0.000);
+	SDL_Delay(1000); puts("");
+}
+
+void playWavFile(void) {
+	const voice v = {
+		// shape,             shift, amp,  pos, inc
+		{  shape_goodEvening, 0.0,  16.0,  0.0, 0.0 }, // wave
+		{  shape_oneOne,      0.0,   1.0,  0.0, 0.0 }, // ampMod
+		{  shape_oneOne,      0.0,   1.0,  0.0, 0.0 }, // spdMod
+		{  shape_squareWav,   0.5,   0.5,  0.0, 0.0 }, // ampEnv
+		{  shape_oneOne,      0.0,   1.0,  0.0, 0.0 }  // spdEnv
+	};
+	setVoice(0, v);
+	shapesFromWavFile(shape_goodEvening, 1, "GoodEveningRadioAudience.wav");
+	setOscIncFromSpeed(0, vo_wave, 1.0);
+	setOscIncFromPeriod(0, vo_ampEnv, 4.8); // twice the clip length, putting it on the high part of the squarewave
+	SDL_Delay(3000); puts("");
+}
+
+
+
 
 int main(int argc, char **argv) {
 	SDL_Init(SDL_INIT_TIMER);_sdlec;
 	initVoices(voice_COUNT, shape_COUNT);
-	{
-		float oneOne[1] = {1};
-		shapeFromMem(shape_oneOne, 1, oneOne);
-	}
+	float oneOne[1] = {1};
+	shapeFromMem(shape_oneOne, 1, oneOne);
 	shapeFromSine (shape_sineWav, 1024);
 	shapeFromSaw  (shape_sawWav,  1024);
-	shapeFromPulse(shape_pulseWav, 2, 0.5);
+	shapeFromPulse(shape_squareWav, 2, 0.5);
+	shapeFromPulse(shape_pulseWav,  2, 0.5);
 	
 	puts("unpauseAudio()");
 	unpauseAudio();
 	
-	fadeIn();
-	pan();
-	modulate();
-	envelope();
-	manyVoices();
-	pulseWidthSweep();
+	//fadeIn();
+	//pan();
+	//modulate();
+	//envelope();
+	//manyVoices();
+	//pulseWidthSweep();
 	playWavFile();
 	
 	closeVoices();
