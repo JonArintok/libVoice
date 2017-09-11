@@ -112,7 +112,7 @@ void shapesFromWavFile(int firstShapeIndex, uint32_t shapeCount, const char *pat
 			printf("\ncould not load file: \"%s\"\n", path);
 			return;
 		}
-		logSpec(wavSpec);
+		//logSpec(wavSpec);
 		SDL_AudioCVT cvt;
 		// if channelSelect < 0 or past the available channels,
 		// then let SDL mix it, else we will extract the desired channel later
