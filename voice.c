@@ -396,6 +396,7 @@ int initVoices(int initVoiceCount, int initShapeCount) {
 	voicesPan = calloc(voiceCount, sizeof(float));
 	voiceMutexes = malloc(sizeof(SDL_mutex*)*voiceCount);
 	fr (v, voiceCount) {voiceMutexes[v] = SDL_CreateMutex();_sdlec;}
+	fr (v, voiceCount) voices[v][vo_wave].shape = -1; // disables all voices
 	setGlobalVolume(1.0);
 	return 0;
 }

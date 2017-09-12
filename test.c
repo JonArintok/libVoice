@@ -199,7 +199,7 @@ void pulseWidthSweep(void) {
 void goodEvening(void) {
 	const voice v = {
 		// shape,              amp, shift, pos, inc
-		{  shape_goodEvening, 16.0, 0.0,   0.0, 0.0 }, // wave
+		{  shape_goodEvening,  1.0, 0.0,   0.0, 0.0 }, // wave
 		{  shape_oneOne,       1.0, 0.0,   0.0, 0.0 }, // ampMod
 		{  shape_oneOne,       1.0, 0.0,   0.0, 0.0 }, // spdMod
 		{  shape_squareWav,    0.5, 0.5,   0.0, 0.0 }, // ampEnv
@@ -220,7 +220,7 @@ void hellooo(void) {
 	for (int i = 0; i < voice_miscCount; i++) {
 		const voice v = {
 			// shape,          amp, shift, pos, inc
-			{  shape_hellooo, 16.0, 0.0,   0.0, 0.0 }, // wave
+			{  shape_hellooo,  1.0, 0.0,   0.0, 0.0 }, // wave
 			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // ampMod
 			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // spdMod
 			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // ampEnv
@@ -240,7 +240,7 @@ void ropeSwoosh(void) {
 	disableVoices(voice_ropeSwooshL, voice_ropeSwooshR);
 	voice v = {
 		// shape,              amp, shift, pos, inc
-		{  shape_ropeSwooshL, 16.0, 0.0,   0.0, 0.0 }, // wave
+		{  shape_ropeSwooshL,  1.0, 0.0,   0.0, 0.0 }, // wave
 		{  shape_oneOne,       1.0, 0.0,   0.0, 0.0 }, // ampMod
 		{  shape_oneOne,       1.0, 0.0,   0.0, 0.0 }, // spdMod
 		{  shape_squareWav,    0.5, 0.5,   0.0, 0.0 }, // ampEnv
@@ -253,8 +253,8 @@ void ropeSwoosh(void) {
 	setVoicePan(voice_ropeSwooshR,  1.0);
 	setOscIncFromSpeed(voice_ropeSwooshL, vo_wave, 1.0);
 	setOscIncFromSpeed(voice_ropeSwooshR, vo_wave, 1.0);
-	setOscIncFromPeriod(voice_ropeSwooshL, vo_ampEnv, 4.8); // twice the period, putting it on the high part of the squarewave
-	setOscIncFromPeriod(voice_ropeSwooshR, vo_ampEnv, 4.8);
+	setOscIncFromPeriod(voice_ropeSwooshL, vo_ampEnv, 2.0); // twice the period, putting it on the high part of the squarewave
+	setOscIncFromPeriod(voice_ropeSwooshR, vo_ampEnv, 2.0);
 	enableVoices(voice_ropeSwooshL, voice_ropeSwooshR);
 }
 
@@ -275,25 +275,32 @@ int main(int argc, char **argv) {
 	puts("unpauseAudio()");
 	unpauseAudio();
 	
-	// fadeIn();
-	// SDL_Delay(1000); puts("");
-	// pan();
-	// SDL_Delay(1000); puts("");
-	// modulate();
-	// SDL_Delay(1000); puts("");
-	// envelope();
-	// SDL_Delay(4000); puts("");
-	// manyVoices();
-	// SDL_Delay(1000); puts("");
-	// pulseWidthSweep();
-	// SDL_Delay(1000); puts("");
+	fadeIn();
+	SDL_Delay(1000); puts("");
+	pan();
+	SDL_Delay(1000); puts("");
+	modulate();
+	SDL_Delay(1000); puts("");
+	envelope();
+	SDL_Delay(4000); puts("");
+	
+	manyVoices();
+	SDL_Delay(1000); puts("");
+	pulseWidthSweep();
+	SDL_Delay(1000); puts("");
+	disableVoices(0, voice_miscCount-1);
+	
 	goodEvening();
 	SDL_Delay(3000); puts("");
-	//hellooo();
-	//SDL_Delay(5000); puts("");
-	//ropeSwoosh();
-	//SDL_Delay(3000); puts("");
-	//restartVoices(voice_ropeSwooshL, voice_ropeSwooshR);
+	disableVoice(voice_goodEvening);
+	
+	hellooo();
+	SDL_Delay(5000); puts("");
+	disableVoices(0, voice_COUNT-1);
+	
+	// ropeSwoosh();
+	// SDL_Delay(3000); puts("");
+	// restartVoices(voice_ropeSwooshL, voice_ropeSwooshR);
 	
 	closeVoices();
 	SDL_Quit();_sdlec;
