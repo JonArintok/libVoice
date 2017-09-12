@@ -3,8 +3,8 @@ extern const double semitoneRatio; // multiply a freq by this to get the freq 1 
 
 typedef struct {
 	long   shape; // index in shape array
-	float  shift; // add to shape output sample
 	float  amp;   // multiply shape output sample
+	float  shift; // add to shape output sample
 	double pos;   // position in shape, 0 to 1
 	double inc;   // increment pos by this amount for each output sample
 } osc;
@@ -36,10 +36,11 @@ void shapeFromPulse  (int shapeIndex, int sampleCount, double pulseWidth);
 void shapesFromWavFile(int firstShapeIndex, uint32_t shapeCount, const char *path); // will not write more shapes than there are channels in the wav file
 
 void setOscShape        (int voiceIndex, int voicePart, int shapeIndex);
-void setOscShift        (int voiceIndex, int voicePart, double shift);
 void setOscAmp          (int voiceIndex, int voicePart, double amp);
+void setOscShift        (int voiceIndex, int voicePart, double shift);
 void setOscPos          (int voiceIndex, int voicePart, double pos);
 void setOscInc          (int voiceIndex, int voicePart, double inc);
+void mulOscInc          (int voiceIndex, int voicePart, double n);
 void setOscIncFromFreq  (int voiceIndex, int voicePart, double freq); // in Hz
 void setOscIncFromPeriod(int voiceIndex, int voicePart, double period); // in seconds
 void setOscIncFromSpeed (int voiceIndex, int voicePart, double speed); // input samples per output sampes
@@ -49,6 +50,10 @@ void setVoicePan (int voiceIndex, double pan); // 0 is centered, -1.0 is all lef
 void restartVoice(int voiceIndex); // set all osc positions to 0
 void enableVoice (int voiceIndex);
 void disableVoice(int voiceIndex);
-void restartVoices(int firstVoiceIndex, int lastVoiceIndex); // guaranteed simultaneous
+// the following are guaranteed simultaneous
+void setOscPoss   (int firstVoiceIndex, int lastVoiceIndex, int voicePart, double pos);
+void setOscIncs   (int firstVoiceIndex, int lastVoiceIndex, int voicePart, double inc);
+void mulOscIncs   (int firstVoiceIndex, int lastVoiceIndex, int voicePart, double n);
+void restartVoices(int firstVoiceIndex, int lastVoiceIndex);
 void enableVoices (int firstVoiceIndex, int lastVoiceIndex);
 void disableVoices(int firstVoiceIndex, int lastVoiceIndex);

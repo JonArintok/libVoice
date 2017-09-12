@@ -204,6 +204,12 @@ void setOscInc(int voiceIndex, int voicePart, double inc) {
 	voices[voiceIndex][voicePart].inc = inc;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
+void mulOscInc(int voiceIndex, int voicePart, double n) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	voices[voiceIndex][voicePart].inc *= n;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
+
 void setOscIncFromFreq(int voiceIndex, int voicePart, double freq) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
@@ -250,6 +256,39 @@ void disableVoice(int voiceIndex) {
 	voices[voiceIndex][vo_wave].shape = -1*abs(voices[voiceIndex][vo_wave].shape);
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
+
+#define forVoiceRange(i) for (int i = firstVoiceIndex; i <= lastVoiceIndex; i++)
+void setOscPoss(int firstVoiceIndex, int lastVoiceIndex, int voicePart, double pos) {
+	forVoiceRange(i) SDL_LockMutex(voiceMutexes[i]);
+	forVoiceRange(i) voices[i][voicePart].pos = pos;
+	forVoiceRange(i) SDL_UnlockMutex(voiceMutexes[i]);
+}
+void setOscIncs(int firstVoiceIndex, int lastVoiceIndex, int voicePart, double inc) {
+	forVoiceRange(i) SDL_LockMutex(voiceMutexes[i]);
+	forVoiceRange(i) voices[i][voicePart].inc = inc;
+	forVoiceRange(i) SDL_UnlockMutex(voiceMutexes[i]);
+}
+void mulOscIncs(int firstVoiceIndex, int lastVoiceIndex, int voicePart, double n) {
+	forVoiceRange(i) SDL_LockMutex(voiceMutexes[i]);
+	forVoiceRange(i) voices[i][voicePart].inc *= n;
+	forVoiceRange(i) SDL_UnlockMutex(voiceMutexes[i]);
+}
+void restartVoices(int firstVoiceIndex, int lastVoiceIndex) {
+	forVoiceRange(i) SDL_LockMutex(voiceMutexes[i]);
+	forVoiceRange(i) {fr (o, vo_oscPerVoice) voices[i][o].pos = 0;}
+	forVoiceRange(i) SDL_UnlockMutex(voiceMutexes[i]);
+}
+void enableVoices(int firstVoiceIndex, int lastVoiceIndex) {
+	forVoiceRange(i) SDL_LockMutex(voiceMutexes[i]);
+	forVoiceRange(i) voices[i][vo_wave].shape = abs(voices[i][vo_wave].shape);
+	forVoiceRange(i) SDL_UnlockMutex(voiceMutexes[i]);
+}
+void disableVoices(int firstVoiceIndex, int lastVoiceIndex) {
+	forVoiceRange(i) SDL_LockMutex(voiceMutexes[i]);
+	forVoiceRange(i) voices[i][vo_wave].shape = -1*abs(voices[i][vo_wave].shape);
+	forVoiceRange(i) SDL_UnlockMutex(voiceMutexes[i]);
+}
+
 void setVoicePan(int voiceIndex, double pan) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	voicesPan[voiceIndex] = pan;
