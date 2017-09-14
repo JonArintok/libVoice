@@ -7,8 +7,10 @@
 #include <SDL2/SDL.h>
 
 #include "voice.h"
-#include "misc.h"
 #include "sdlec.h"
+
+#define fr(i, bound) for (int i = 0; i < (bound); i++)
+
 
 //#define LOG_AUDIO_HISTORY
 
@@ -16,6 +18,7 @@
 #define atomic_t SDL_atomic_t
 #define atomic_max INT32_MAX // not sure if this is right...
 
+const double tau = 6.28318530717958647692528676655900576839433879875;
 const double semitoneRatio = 1.059463094359295264562; // the 12th root of 2
 const double A4freq  = 440.0;
 const double A4pitch =  57.0;
@@ -26,7 +29,7 @@ double freqFromPitch(double pitch) {
 
 uint32_t sampleRate = 48000; // may be changed by initVoices(), but not after
 uint32_t floatStreamSize = 1024; // must be a power of 2
-atomic_t globalVolume = {0}; // atomic_max is 1.0
+atomic_t globalVolume = {0}; // atomic_max represents 1.0
 
 
 void setGlobalVolume(float v) {
@@ -118,7 +121,7 @@ void shapesFromWavFile(int firstShapeIndex, uint32_t shapeCount, const char *pat
 		// then let SDL mix it, else we will extract the desired channel later
 		if (shapeCount > wavSpec.channels) shapeCount = wavSpec.channels;
 		SDL_BuildAudioCVT(
-			&cvt,             // SDL_AudioCVT*   cvt
+			&cvt,             // SDL_AudioCVT   *cvt
 			wavSpec.format,   // SDL_AudioFormat src_format
 			wavSpec.channels, // Uint8           src_channels
 			wavSpec.freq,     // int             src_rate
@@ -136,20 +139,25 @@ void shapesFromWavFile(int firstShapeIndex, uint32_t shapeCount, const char *pat
 		sampleCount = cvt.len_cvt/sizeof(float);
 		SDL_FreeWAV(wavBuf);_sdlec;
 	}
-	// printf("sampleCount: %i\n", sampleCount);
-	// puts("\n_______samples_______");
-	// fr (s, sampleCount) {
-	// 	printf("%4i: %7.6f\n", s, samples[s]);
-	// }
-	// puts("");
-	if (shapeCount == 1) {
-		shapeFromMem(firstShapeIndex, sampleCount, samples);
-	}
-	else {
-		
-		fr (c, shapeCount) {
-			
-		}
+	switch (shapeCount) {
+	 	case 1: shapeFromMem(firstShapeIndex, sampleCount, samples); break;
+		case 2:
+			{
+				const int sampleCountPerCh = sampleCount/2;
+				float *deinterlaced = malloc(sampleCount*sizeof(float));
+				int di = 0;
+				for (int si = 0; si < sampleCountPerCh; si++, di++) {
+					deinterlaced[di] = samples[si*2];
+				}
+				for (int si = 0; si < sampleCountPerCh; si++, di++) {
+					deinterlaced[di] = samples[si*2 + 1];
+				}
+				shapeFromMem(firstShapeIndex,   sampleCountPerCh, deinterlaced);
+				shapeFromMem(firstShapeIndex+1, sampleCountPerCh, &deinterlaced[sampleCountPerCh]);
+				free(deinterlaced);
+			}
+			break;
+		default: printf("unsupported channel count: %i from %s\n", shapeCount, path);
 	}
 	free(samples);
 }

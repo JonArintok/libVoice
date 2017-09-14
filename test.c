@@ -253,8 +253,8 @@ void ropeSwoosh(void) {
 	setVoicePan(voice_ropeSwooshR,  1.0);
 	setOscIncFromSpeed(voice_ropeSwooshL, vo_wave, 1.0);
 	setOscIncFromSpeed(voice_ropeSwooshR, vo_wave, 1.0);
-	setOscIncFromPeriod(voice_ropeSwooshL, vo_ampEnv, 2.0); // twice the period, putting it on the high part of the squarewave
-	setOscIncFromPeriod(voice_ropeSwooshR, vo_ampEnv, 2.0);
+	setOscIncFromPeriod(voice_ropeSwooshL, vo_ampEnv, 2.4); // twice the period, putting it on the high part of the squarewave
+	setOscIncFromPeriod(voice_ropeSwooshR, vo_ampEnv, 2.4);
 	enableVoices(voice_ropeSwooshL, voice_ropeSwooshR);
 }
 
@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
 	shapeFromPulse(shape_pulseWav,  2, 0.5);
 	shapesFromWavFile(shape_goodEvening, 1, "GoodEveningRadioAudience.wav");
 	shapesFromWavFile(shape_hellooo, 1, "Hellooo.wav");
-	//shapesFromWavFile(shape_ropeSwooshL, 2, "77938__benboncan__ropeswoosh-3.wav");
+	shapesFromWavFile(shape_ropeSwooshL, 2, "77938__benboncan__ropeswoosh-3.wav");
 	
 	puts("unpauseAudio()");
 	unpauseAudio();
@@ -298,9 +298,8 @@ int main(int argc, char **argv) {
 	SDL_Delay(5000); puts("");
 	disableVoices(0, voice_COUNT-1);
 	
-	// ropeSwoosh();
-	// SDL_Delay(3000); puts("");
-	// restartVoices(voice_ropeSwooshL, voice_ropeSwooshR);
+	ropeSwoosh();
+	SDL_Delay(3000); puts("");
 	
 	closeVoices();
 	SDL_Quit();_sdlec;
