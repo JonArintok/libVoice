@@ -1,6 +1,6 @@
 # mostly copied from https://stackoverflow.com/a/1484873/1472246
 
-TARGET = test
+TARGET = demo
 LIBS = -lm -lSDL2
 CC = gcc
 CFLAGS = -g -O2 -Wall
