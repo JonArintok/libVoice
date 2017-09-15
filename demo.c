@@ -18,7 +18,7 @@ enum {
 	shape_COUNT
 };
 enum {
-	voice_miscCount = 9,
+	voice_chordNotes = 9,
 	voice_goodEvening,
 	voice_ropeSwooshL,
 	voice_ropeSwooshR,
@@ -28,7 +28,7 @@ enum {
 void fadeIn(void) {
 	voice v = {
 		// shape,         amp, shift, pos, inc
-		{  shape_sawWav,  1.0, 0.0,   0.0, 0.0 }, // wave
+		{  shape_sawWav,  0.3, 0.0,   0.0, 0.0 }, // wave
 		{  shape_sawWav,  0.0, 0.75,  0.0, 1.0 }, // ampMod
 		{  shape_sineWav, 0.0, 0.80,  0.0, 1.0 }, // spdMod
 		{  shape_oneOne,  0.5, 0.5,   0.0, 0.0 }, // ampEnv
@@ -160,22 +160,25 @@ void envelope(void) {
 	restartVoice(0);
 }
 
-void manyVoices(void) {
-	for (int i = 0; i < voice_miscCount; i++) {
+void pulseWaveChord(void) {
+	for (int i = 0; i < voice_chordNotes; i++) {
+		setGlobalVolume(((float)i/voice_chordNotes)*0.5 + 0.5); // compensate for the way all voices get quieter as more voices are enabled.
 		const voice v = {
 			// shape,          amp, shift, pos, inc
-			{  shape_pulseWav, 1.0, 0.0,   0.0, 0.0 }, // wave
+			{  shape_pulseWav, 0.6, 0.0,   0.0, 0.0 }, // wave
 			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // ampMod
 			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // spdMod
 			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // ampEnv
 			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }  // spdEnv
 		};
 		setVoice(i, v);
-		setVoicePan(i, ((double)i/voice_miscCount)*(-2*(i%2) + 1)); // alternate left/right moving out from center
+		setVoicePan(i, ((double)i/voice_chordNotes)*(-2*(i%2) + 1)); // alternate left/right moving out from center
 		const double basePitch = 46; // C4
 		#define notesPerChord 4
 		const double pitchIntervals[notesPerChord] = {0.0, 4.0, 7.0, 9.0}; // 6 chord
-		setOscIncFromFreq(i, vo_wave, freqFromPitch(basePitch + 12*(i/notesPerChord) + pitchIntervals[i%notesPerChord]));
+		const double pitch = basePitch + 12*(i/notesPerChord) + pitchIntervals[i%notesPerChord];
+		printf("setOscIncFromFreq(%i, vo_wave, freqFromPitch(%f))\n", i, pitch);
+		setOscIncFromFreq(i, vo_wave, freqFromPitch(pitch));
 		SDL_Delay(500);
 	}
 }
@@ -184,13 +187,13 @@ void pulseWidthSweep(void) {
 	double pw = 0.49;
 	do {
 		pw += 0.01;
-		printf("shapeFromPulse(shape_pulseWav, 64, %f);\n", pw);
+		printf("shapeFromPulse(shape_pulseWav, 64, %f)\n", pw);
 		shapeFromPulse(shape_pulseWav, 64, pw);
 		SDL_Delay(32);
 	} while (pw < 1.0);
 	do {
 		pw -= 0.010;
-		printf("shapeFromPulse(shape_pulseWav, 64, %f);\n", pw);
+		printf("shapeFromPulse(shape_pulseWav, 64, %f)\n", pw);
 		shapeFromPulse(shape_pulseWav, 64, pw);
 		SDL_Delay(32);
 	} while (pw > 0.000);
@@ -199,49 +202,31 @@ void pulseWidthSweep(void) {
 void goodEvening(void) {
 	const voice v = {
 		// shape,              amp, shift, pos, inc
-		{  shape_goodEvening,  1.0, 0.0,   0.0, 0.0 }, // wave
-		{  shape_oneOne,       1.0, 0.0,   0.0, 0.0 }, // ampMod
+		{  shape_goodEvening,  1.3, 0.0,   0.0, 0.0 }, // wave
+		{  shape_oneOne,       1.3, 0.0,   0.0, 0.0 }, // ampMod
 		{  shape_oneOne,       1.0, 0.0,   0.0, 0.0 }, // spdMod
 		{  shape_squareWav,    0.5, 0.5,   0.0, 0.0 }, // ampEnv
 		{  shape_oneOne,       1.0, 0.0,   0.0, 0.0 }  // spdEnv
 	};
 	setVoice(voice_goodEvening, v);
+	printf("setOscIncFromSpeed(voice_goodEvening, vo_wave, 1.0)\n");
 	setOscIncFromSpeed(voice_goodEvening, vo_wave, 1.0);
 	setOscIncFromPeriod(voice_goodEvening, vo_ampEnv, 4.8); // twice the period, putting it on the high part of the squarewave
 	SDL_Delay(3000);
 	disableVoice(voice_goodEvening);
 	restartVoice(voice_goodEvening);
 	setOscPos(voice_goodEvening, vo_wave, 1.0);
+	printf("mulOscInc(voice_goodEvening, vo_wave, -1.0)\n");
 	mulOscInc(voice_goodEvening, vo_wave, -1.0);
 	enableVoice(voice_goodEvening);
-}
-
-void hellooo(void) {
-	for (int i = 0; i < voice_miscCount; i++) {
-		const voice v = {
-			// shape,          amp, shift, pos, inc
-			{  shape_hellooo,  1.0, 0.0,   0.0, 0.0 }, // wave
-			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // ampMod
-			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // spdMod
-			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // ampEnv
-			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }  // spdEnv
-		};
-		setVoice(i, v);
-		setVoicePan(i, ((double)i/voice_miscCount)*(-2*(i%2) + 1));
-		#define notesPerChord 4
-		const double pitchIntervals[notesPerChord] = {0.0, 4.0, 7.0, 9.0}; // sixth chord
-		const double speed = pow(semitoneRatio, 12*(i/notesPerChord) + pitchIntervals[i%notesPerChord]);
-		setOscIncFromSpeed(i, vo_wave, speed);
-		SDL_Delay(500);
-	}
 }
 
 void ropeSwoosh(void) {
 	disableVoices(voice_ropeSwooshL, voice_ropeSwooshR);
 	voice v = {
 		// shape,              amp, shift, pos, inc
-		{  shape_ropeSwooshL,  1.0, 0.0,   0.0, 0.0 }, // wave
-		{  shape_oneOne,       1.0, 0.0,   0.0, 0.0 }, // ampMod
+		{  shape_ropeSwooshL,  2.5, 0.0,   0.0, 0.0 }, // wave
+		{  shape_oneOne,       2.5, 0.0,   0.0, 0.0 }, // ampMod
 		{  shape_oneOne,       1.0, 0.0,   0.0, 0.0 }, // spdMod
 		{  shape_squareWav,    0.5, 0.5,   0.0, 0.0 }, // ampEnv
 		{  shape_oneOne,       1.0, 0.0,   0.0, 0.0 }  // spdEnv
@@ -256,11 +241,36 @@ void ropeSwoosh(void) {
 	setOscIncFromPeriod(voice_ropeSwooshL, vo_ampEnv, 2.4); // twice the period, putting it on the high part of the squarewave
 	setOscIncFromPeriod(voice_ropeSwooshR, vo_ampEnv, 2.4);
 	enableVoices(voice_ropeSwooshL, voice_ropeSwooshR);
+	puts("stereo swooosh");
 }
+
+void hellooo(void) {
+	for (int i = 0; i < voice_chordNotes; i++) {
+		setGlobalVolume(((float)i/voice_chordNotes)*0.5 + 0.5); // compensate for the way all voices get quieter as more voices are enabled.
+		const voice v = {
+			// shape,          amp, shift, pos, inc
+			{  shape_hellooo,  2.5, 0.0,   0.0, 0.0 }, // wave
+			{  shape_oneOne,   2.5, 0.0,   0.0, 0.0 }, // ampMod
+			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // spdMod
+			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }, // ampEnv
+			{  shape_oneOne,   1.0, 0.0,   0.0, 0.0 }  // spdEnv
+		};
+		setVoice(i, v);
+		setVoicePan(i, ((double)i/voice_chordNotes)*(-2*(i%2) + 1));
+		#define notesPerChord 4
+		const double pitchIntervals[notesPerChord] = {0.0, 4.0, 7.0, 9.0}; // sixth chord
+		const double speed = pow(semitoneRatio, 12*(i/notesPerChord) + pitchIntervals[i%notesPerChord]);
+		printf("setOscIncFromSpeed(%i, vo_wave, %f)\n", i, speed);
+		setOscIncFromSpeed(i, vo_wave, speed);
+		SDL_Delay(500);
+	}
+}
+
 
 
 int main(int argc, char **argv) {
 	SDL_Init(SDL_INIT_TIMER);_sdlec;
+	puts("initVoices(voice_COUNT, shape_COUNT)");
 	initVoices(voice_COUNT, shape_COUNT);
 	float oneOne[1] = {1};
 	shapeFromMem(shape_oneOne, 1, oneOne);
@@ -271,9 +281,8 @@ int main(int argc, char **argv) {
 	shapesFromWavFile(shape_goodEvening, 1, "GoodEveningRadioAudience.wav");
 	shapesFromWavFile(shape_hellooo, 1, "Hellooo.wav");
 	shapesFromWavFile(shape_ropeSwooshL, 2, "77938__benboncan__ropeswoosh-3.wav");
-	
-	puts("unpauseAudio()");
 	unpauseAudio();
+	
 	
 	fadeIn();
 	SDL_Delay(1000); puts("");
@@ -284,23 +293,28 @@ int main(int argc, char **argv) {
 	envelope();
 	SDL_Delay(4000); puts("");
 	
-	manyVoices();
+	pulseWaveChord();
 	SDL_Delay(1000); puts("");
 	pulseWidthSweep();
 	SDL_Delay(1000); puts("");
-	disableVoices(0, voice_miscCount-1);
+	disableVoices(0, voice_chordNotes-1);
 	
 	goodEvening();
 	SDL_Delay(3000); puts("");
 	disableVoice(voice_goodEvening);
 	
-	hellooo();
-	SDL_Delay(5000); puts("");
-	disableVoices(0, voice_COUNT-1);
-	
 	ropeSwoosh();
 	SDL_Delay(3000); puts("");
 	
+	hellooo();
+	SDL_Delay(5000); puts("");
+	for (double v = 0.9; v > 0.0; v -= 0.01) {
+		printf("setGlobalVolume(%f)\n", v);
+		setGlobalVolume(v);
+		SDL_Delay(16);
+	}
+	
+	puts("\ncloseVoices()");
 	closeVoices();
 	SDL_Quit();_sdlec;
 	return 0;
