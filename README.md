@@ -1,7 +1,8 @@
 # libVoice
 
 A small audio mixer and synth, generalizing recorded and synthesized audio.
-Depends on SDL2.
+
+Depends on SDL2.<br />
 Simply run "make" to compile.
 
 Sound comes from "voices", which have a number of "oscillators",
