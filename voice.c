@@ -16,6 +16,7 @@ void sdlec(int line, const char *file) {
 	printf("SDL error at line %i in %s :\n%s\n", line, file, error);
 	SDL_ClearError();
 }
+#define _sdlec sdlec(__LINE__, __FILE__);
 
 //#define LOG_AUDIO_HISTORY
 
