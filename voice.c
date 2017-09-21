@@ -11,6 +11,12 @@
 
 #define fr(i, bound) for (int i = 0; i < (bound); i++)
 
+void sdlec(int line, const char *file) {
+	const char *error = SDL_GetError();
+	if (!error || !error[0]) return;
+	printf("SDL error at line %i in %s :\n%s\n", line, file, error);
+	SDL_ClearError();
+}
 
 //#define LOG_AUDIO_HISTORY
 
