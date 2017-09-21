@@ -7,7 +7,6 @@
 #include <SDL2/SDL.h>
 
 #include "voice.h"
-#include "sdlec.h"
 
 #define fr(i, bound) for (int i = 0; i < (bound); i++)
 
