@@ -1,3 +1,4 @@
+#include <stdint.h>
 
 extern const double semitoneRatio; // multiply a freq by this to get the freq 1 semitone higher
 

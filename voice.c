@@ -1,7 +1,6 @@
 // "frequency" or "freq" refers to a Hz value, and "pitch" refers to
 // a numeric musical note with 0 for C0, 12 for C1, etc..
 #include <stdio.h>
-#include <stdint.h>
 #include <float.h>
 #include <math.h>
 #include <SDL2/SDL.h>
@@ -10,7 +9,7 @@
 
 #define fr(i, bound) for (int i = 0; i < (bound); i++)
 
-void sdlec(int line, const char *file) {
+static void sdlec(int line, const char *file) {
 	const char *error = SDL_GetError();
 	if (!error || !error[0]) return;
 	printf("SDL error at line %i in %s :\n%s\n", line, file, error);
