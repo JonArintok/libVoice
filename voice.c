@@ -231,6 +231,15 @@ void setOscIncFromFreq(int voiceIndex, int voicePart, double freq) {
 	voices[voiceIndex][voicePart].inc = (freq/(sampleRate/shapeLength))/shapeLength;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
+void setOscIncFromFreqAndRestart(int voiceIndex, int voicePart, double freq) {
+	SDL_LockMutex(voiceMutexes[voiceIndex]);
+	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	double shapeLength = abs(shapesIn[voices[voiceIndex][voicePart].shape].count);
+	SDL_UnlockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	voices[voiceIndex][voicePart].inc = (freq/(sampleRate/shapeLength))/shapeLength;
+	fr (o, vo_oscPerVoice) voices[voiceIndex][o].pos = 0;
+	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
+}
 void setOscIncFromPeriod(int voiceIndex, int voicePart, double period) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
 	voices[voiceIndex][voicePart].inc = (1.0/sampleRate)/period;

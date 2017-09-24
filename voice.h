@@ -43,6 +43,7 @@ void setOscPos          (int voiceIndex, int voicePart, double pos);
 void setOscInc          (int voiceIndex, int voicePart, double inc);
 void mulOscInc          (int voiceIndex, int voicePart, double n);
 void setOscIncFromFreq  (int voiceIndex, int voicePart, double freq); // in Hz
+void setOscIncFromFreqAndRestart(int voiceIndex, int voicePart, double freq); // in Hz
 void setOscIncFromPeriod(int voiceIndex, int voicePart, double period); // in seconds
 void setOscIncFromSpeed (int voiceIndex, int voicePart, double speed); // input samples per output sampes
 void setOsc             (int voiceIndex, int voicePart, const osc o);
