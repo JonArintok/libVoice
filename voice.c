@@ -225,17 +225,17 @@ void mulOscInc(int voiceIndex, int voicePart, double n) {
 
 void setOscIncFromFreq(int voiceIndex, int voicePart, double freq) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
-	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
-	double shapeLength = abs(shapesIn[voices[voiceIndex][voicePart].shape].count);
-	SDL_UnlockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	SDL_LockMutex(shapeMutexes[abs(voices[voiceIndex][voicePart].shape)]);
+	double shapeLength = abs(shapesIn[abs(voices[voiceIndex][voicePart].shape)].count);
+	SDL_UnlockMutex(shapeMutexes[abs(voices[voiceIndex][voicePart].shape)]);
 	voices[voiceIndex][voicePart].inc = (freq/(sampleRate/shapeLength))/shapeLength;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
 void setOscIncFromFreqAndRestart(int voiceIndex, int voicePart, double freq) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
-	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
-	double shapeLength = abs(shapesIn[voices[voiceIndex][voicePart].shape].count);
-	SDL_UnlockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	SDL_LockMutex(shapeMutexes[abs(voices[voiceIndex][voicePart].shape)]);
+	double shapeLength = abs(shapesIn[abs(voices[voiceIndex][voicePart].shape)].count);
+	SDL_UnlockMutex(shapeMutexes[abs(voices[voiceIndex][voicePart].shape)]);
 	voices[voiceIndex][voicePart].inc = (freq/(sampleRate/shapeLength))/shapeLength;
 	fr (o, vo_oscPerVoice) voices[voiceIndex][o].pos = 0;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
@@ -247,9 +247,9 @@ void setOscIncFromPeriod(int voiceIndex, int voicePart, double period) {
 }
 void setOscIncFromSpeed(int voiceIndex, int voicePart, double speed) {
 	SDL_LockMutex(voiceMutexes[voiceIndex]);
-	SDL_LockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
-	const double shapeLength = abs(shapesIn[voices[voiceIndex][voicePart].shape].count);
-	SDL_UnlockMutex(shapeMutexes[voices[voiceIndex][voicePart].shape]);
+	SDL_LockMutex(shapeMutexes[abs(voices[voiceIndex][voicePart].shape)]);
+	const double shapeLength = abs(shapesIn[abs(voices[voiceIndex][voicePart].shape)].count);
+	SDL_UnlockMutex(shapeMutexes[abs(voices[voiceIndex][voicePart].shape)]);
 	voices[voiceIndex][voicePart].inc = speed/shapeLength;
 	SDL_UnlockMutex(voiceMutexes[voiceIndex]);
 }
@@ -332,6 +332,7 @@ void clampOsc(osc *o) {
 
 #define scootch 0.0000001 // to read up to "count" without going out of bounds
 float readOsc(const osc o) {
+	// this is only expected to be called for enabled voices, so abs is not called on shape index
 	return shapes[o.shape].data[(long)(o.pos * (shapes[o.shape].count-scootch))] * o.amp + o.shift;
 }
 
