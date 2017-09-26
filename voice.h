@@ -30,10 +30,10 @@ void setGlobalVolume(float v); // exponential
 
 double freqFromPitch(double pitch);
 
-void shapeFromMem    (int shapeIndex, int sampleCount, const float *mem);
-void shapeFromSine   (int shapeIndex, int sampleCount);
-void shapeFromSaw    (int shapeIndex, int sampleCount);
-void shapeFromPulse  (int shapeIndex, int sampleCount, double pulseWidth);
+void shapeFromMem  (int shapeIndex, int sampleCount, const float *mem);
+void shapeFromSine (int shapeIndex, int sampleCount);
+void shapeFromSaw  (int shapeIndex, int sampleCount);
+void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth);
 void shapesFromWavFile(int firstShapeIndex, uint32_t shapeCount, const char *path); // will not write more shapes than there are channels in the wav file
 
 void setOscShape        (int voiceIndex, int voicePart, int shapeIndex);
