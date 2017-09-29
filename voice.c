@@ -168,8 +168,9 @@ void shapesFromWavFile(int firstShapeIndex, uint32_t shapeCount, const char *pat
 }
 int getShapeLength(int shapeIndex) {
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
-	return shapesIn[shapeIndex].count;
+	int l = shapesIn[shapeIndex].count;
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
+	return l;
 }
 double incFromFreq  (int shapeLength, double freq) {
 	return (freq/(sampleRate/shapeLength))/shapeLength;
