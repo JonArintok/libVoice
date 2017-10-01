@@ -166,9 +166,9 @@ void shapesFromWavFile(int firstShapeIndex, uint32_t shapeCount, const char *pat
 	}
 	free(samples);
 }
-int getShapeLength(int shapeIndex) {
+long getShapeLength(int shapeIndex) {
 	SDL_LockMutex(shapeMutexes[shapeIndex]);
-	int l = shapesIn[shapeIndex].count;
+	long l = shapesIn[shapeIndex].count;
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 	return l;
 }
