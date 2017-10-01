@@ -36,9 +36,9 @@ void shapeFromSaw  (int shapeIndex, int sampleCount);
 void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth);
 void shapesFromWavFile(int firstShapeIndex, uint32_t shapeCount, const char *path); // will not write more shapes than there are channels in the wav file
 long getShapeLength(int shapeIndex);
-double incFromFreq(int shapeLength, double freq); // in Hz
+double incFromFreq(long shapeLength, double freq); // in Hz
 double incFromPeriod(double period); // in seconds
-double incFromSpeed(int shapeLength, double speed); // input samples per output sampes
+double incFromSpeed(long shapeLength, double speed); // input samples per output sampes
 
 void setOsc           (int voiceIndex, int voicePart, const osc o);
 void setOscShape      (int voiceIndex, int voicePart, int shapeIndex);
