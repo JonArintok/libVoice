@@ -172,13 +172,13 @@ int getShapeLength(int shapeIndex) {
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 	return l;
 }
-double incFromFreq  (int shapeLength, double freq) {
+double incFromFreq(int shapeLength, double freq) {
 	return (freq/(sampleRate/shapeLength))/shapeLength;
 }
 double incFromPeriod(double period) {
 	return (1.0/sampleRate)/period;
 }
-double incFromSpeed (int shapeLength, double speed) {
+double incFromSpeed(int shapeLength, double speed) {
 	return speed/shapeLength;
 }
 

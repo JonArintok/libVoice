@@ -36,18 +36,18 @@ void shapeFromSaw  (int shapeIndex, int sampleCount);
 void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth);
 void shapesFromWavFile(int firstShapeIndex, uint32_t shapeCount, const char *path); // will not write more shapes than there are channels in the wav file
 int getShapeLength(int shapeIndex);
-double incFromFreq  (int shapeLength, double freq); // in Hz
+double incFromFreq(int shapeLength, double freq); // in Hz
 double incFromPeriod(double period); // in seconds
-double incFromSpeed (int shapeLength, double speed); // input samples per output sampes
+double incFromSpeed(int shapeLength, double speed); // input samples per output sampes
 
-void setOsc             (int voiceIndex, int voicePart, const osc o);
-void setOscShape        (int voiceIndex, int voicePart, int shapeIndex);
-void setOscAmp          (int voiceIndex, int voicePart, double amp);
-void setOscShift        (int voiceIndex, int voicePart, double shift);
-void setOscPos          (int voiceIndex, int voicePart, double pos);
-void setOscInc          (int voiceIndex, int voicePart, double inc);
-void mulOscInc          (int voiceIndex, int voicePart, double n);
-void setOscIncFromFreq  (int voiceIndex, int voicePart, double freq);
+void setOsc           (int voiceIndex, int voicePart, const osc o);
+void setOscShape      (int voiceIndex, int voicePart, int shapeIndex);
+void setOscAmp        (int voiceIndex, int voicePart, double amp);
+void setOscShift      (int voiceIndex, int voicePart, double shift);
+void setOscPos        (int voiceIndex, int voicePart, double pos);
+void setOscInc        (int voiceIndex, int voicePart, double inc);
+void mulOscInc        (int voiceIndex, int voicePart, double n);
+void setOscIncFromFreq(int voiceIndex, int voicePart, double freq);
 void setOscIncFromFreqAndRestart(int voiceIndex, int voicePart, double freq);
 void setOscIncFromPeriod(int voiceIndex, int voicePart, double period);
 void setOscIncFromSpeed (int voiceIndex, int voicePart, double speed);
