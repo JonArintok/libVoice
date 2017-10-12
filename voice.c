@@ -77,8 +77,17 @@ void shapeFromSaw(int shapeIndex, int sampleCount) {
 	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
 	shapesIn[shapeIndex].count = -sampleCount;
 	fr (s, sampleCount) {
-		shapesIn[shapeIndex].data[s] = (1.0 - ((double)s/sampleCount)*2);
+		shapesIn[shapeIndex].data[s] = 1.0 - ((double)s/sampleCount)*2.0;
 	}
+	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
+}
+void shapeFromTri(int shapeIndex, int sampleCount) {
+	SDL_LockMutex(shapeMutexes[shapeIndex]);
+	shapesIn[shapeIndex].data = realloc(shapesIn[shapeIndex].data, sizeof(float)*sampleCount);
+	shapesIn[shapeIndex].count = -sampleCount;
+	int s = 0;
+	for (double t = 0; s < sampleCount/2; s++, t++) shapesIn[shapeIndex].data[s] = -1.0 + (t/sampleCount)*4.0;
+	for (double t = 0; s < sampleCount;   s++, t++) shapesIn[shapeIndex].data[s] =  1.0 - (t/sampleCount)*4.0;
 	SDL_UnlockMutex(shapeMutexes[shapeIndex]);
 }
 void shapeFromPulse(int shapeIndex, int sampleCount, double pulseWidth) {
