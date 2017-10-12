@@ -32,18 +32,21 @@ double freqFromPitch(double pitch) {
 	return pow(semitoneRatio, pitch-A4pitch)*A4freq;
 }
 
-uint32_t sampleRate = 48000; // may be changed by initVoices(), but not after
-uint32_t floatStreamSize = 1024; // must be a power of 2
-atomic_t globalVolume = {0}; // atomic_max represents 1.0
+uint32_t   sampleRate = 48000; // may be changed by initVoices(), but not after
+uint32_t   floatStreamSize = 1024; // must be a power of 2
+double     globalVolume = 1.0;
+SDL_mutex *gvMutex;
 
-
-void setGlobalVolume(float v) {
-	if      (v >= 1) {SDL_AtomicSet(&globalVolume, atomic_max);_sdlec;}
-	else if (v <= 0) {SDL_AtomicSet(&globalVolume, 0);_sdlec;}
-	else             {SDL_AtomicSet(&globalVolume, v*atomic_max);_sdlec;}
+void setGlobalVolume(double v) {
+	SDL_LockMutex(gvMutex);
+	globalVolume = v;
+	SDL_UnlockMutex(gvMutex);
 }
-float getGlobalVolume(void) {
-	return pow((float)SDL_AtomicGet(&globalVolume)/atomic_max, 2);_sdlec;
+double getGlobalVolume(void) {
+	SDL_LockMutex(gvMutex);
+	double v = globalVolume;
+	SDL_UnlockMutex(gvMutex);
+	return v;
 }
 
 typedef struct {float *data; long count;} floatArray;
@@ -403,12 +406,14 @@ void audioCallback(void *_unused, uint8_t *byteStream, int byteStreamLength) {
 		SDL_UnlockMutex(voiceMutexes[v]);_sdlec;
 	}
 	if (enabledVoiceCount < 1) return;
-	const float globalVolumeF = getGlobalVolume();
+	SDL_LockMutex(gvMutex);
+	const double gv = globalVolume;
+	SDL_UnlockMutex(gvMutex);
 	if (enabledVoiceCount > 1) {
-		const double amp = globalVolumeF / enabledVoiceCount;
+		const double amp = gv / enabledVoiceCount;
 		fr (s, floatStreamSize) floatStream[s] *= amp;
 	}
-	else fr (s, floatStreamSize) floatStream[s] *= globalVolumeF;
+	else fr (s, floatStreamSize) floatStream[s] *= gv;
 }
 
 SDL_AudioDeviceID audioDevice;
@@ -443,9 +448,9 @@ int initVoices(int initVoiceCount, int initShapeCount) {
 	voices = calloc(voiceCount, sizeof(voice));
 	voicesPan = calloc(voiceCount, sizeof(float));
 	voiceMutexes = malloc(sizeof(SDL_mutex*)*voiceCount);
+	gvMutex = SDL_CreateMutex();_sdlec;
 	fr (v, voiceCount) {voiceMutexes[v] = SDL_CreateMutex();_sdlec;}
 	fr (v, voiceCount) voices[v][vo_wave].shape = -1; // disables all voices
-	setGlobalVolume(1.0);
 	return 0;
 }
 
