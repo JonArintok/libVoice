@@ -26,7 +26,7 @@ int closeVoices(void);
 
 void unpauseAudio(void);
 void pauseAudio(void);
-void setGlobalVolume(double v); // not exponential
+void setGlobalVolume(double v);
 double getGlobalVolume(void);
 
 double freqFromPitch(double pitch);
